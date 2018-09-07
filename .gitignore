@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+.idea
+
+/BasicGames/ImageProcessing/Sources
+/BasicGames/ImageProcessing/Output
+/ResourceCreation/
+
