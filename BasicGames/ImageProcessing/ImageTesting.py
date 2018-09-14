@@ -54,28 +54,10 @@ def plot_template_match(image, template, template_results, title="Template Match
 
 def main():
 	start = datetime.now()
-	filter_array = build_filter("JumpFilter2.0.png", "JumpFilter_Long.png", "JumpFilter_Cloud.png")
-	# Loops through all the mario jumping images
-	for i in range(1, 16):
-		mario_jump = cv2.imread(f"JumpingTests/MarioJumping{i}.png", 0)
-		filter_maxs = {}
-		cur_max = 0
-		# Loops through all the filter images and finds the most similar one to the current photo
-		for index, filters in enumerate(filter_array):
-			results = match_template(mario_jump, filters, "cv2.TM_CCOEFF")
-			_, max_val, _, _ = cv2.minMaxLoc(results)
-			if index > 0:
-				if max_val < filter_maxs[index - 1][1]:
-					pass
-				else:
-					cur_max = index
-			else:
-				cur_max = index
-			filter_maxs[index] = (results, max_val)
-		results, _ = filter_maxs[cur_max]
-		# Plots the best filter (and location of said filter) onto the image
-		plot_template_match(mario_jump, filter_array[cur_max],
-		                    results, title="Jump Filter Result")
+	scanner = TemplateScanner(["GarfieldJumping.png"])
+	m_going_up = cv2.imread("Sources/Garf.png")
+	scanner.scan([m_going_up])
+	scanner.plot_template_match(m_going_up, scanner.cur_results)
 	end = datetime.now()
 	print(f"TOTAL TIME = {end - start}")
 
