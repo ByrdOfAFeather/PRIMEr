@@ -1,7 +1,7 @@
 """A file for identifying the plausibility of using basic image templates to find specifically jumps in mario
 Author: Matthew Byrd
 Date created: 8/31/2018
-Date last modified: 9/1/2018
+Date last modified: 9/18/2018
 """
 from TemplateScanner import TemplateScanner
 import cv2
@@ -32,7 +32,7 @@ def build_filter(*image_names):
 
 
 def plot_template_match(image, template, template_results, title="Template Matching result"):
-	"""Plots the image with the rectangle overlayed on top of it. (Inspired from: https://docs.opencv.org/3.4.3/d4/dc6/tutorial_py_template_matching.html)
+	"""Plots the image with the rectangle put on top of it. (Inspired from: https://docs.opencv.org/3.4.3/d4/dc6/tutorial_py_template_matching.html)
 	:param image: A cv2.imread() variable of the original image
 	:param template: A cv2.imread() variable of the template
 	:param template_results: The results of running the template inside of cv2's matching method
@@ -52,14 +52,7 @@ def plot_template_match(image, template, template_results, title="Template Match
 	plt.show()
 
 
-def main():
-	start = datetime.now()
-	scanner = TemplateScanner(["GarfieldJumping.png"])
-	m_going_up = cv2.imread("Sources/Garf.png")
-	scanner.scan([m_going_up])
-	scanner.plot_template_match(m_going_up, scanner.cur_results)
-	end = datetime.now()
-	print(f"TOTAL TIME = {end - start}")
+def main(): pass
 
 
 if __name__ == "__main__": main()

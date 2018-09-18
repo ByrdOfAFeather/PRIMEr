@@ -18,6 +18,11 @@ Garfield (Famicom): https://www.youtube.com/watch?v=6JxeHtXmJ9s
 
 FullMetal Alchemist (DS): https://www.youtube.com/watch?v=QxSl2XYw1jw
 
+Megaman 2 (NES): https://www.youtube.com/watch?v=vuJ8Qr-3_zg
+
+Transformers (NES): https://www.youtube.com/watch?v=uWjmkk5H9PE
+
+
 <h1 align="center">Resources Access Instructions</h1>
 
 Click <a href="https://1drv.ms/f/s!AuFmitBjrXNij74LdqxZGYc3yu85Tg">Here</a>
