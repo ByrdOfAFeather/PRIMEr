@@ -42,7 +42,6 @@ class RunThread(Thread):
 			threads.join()
 
 		for run_times in run_finder:
-			print(run_times)
 			self.output.extend(run_times.output)
 
 

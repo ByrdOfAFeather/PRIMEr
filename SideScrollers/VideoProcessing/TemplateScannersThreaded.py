@@ -1,7 +1,7 @@
 """A general class for using a template to scan a image using multiple threads
 Author: Matthew Byrd
-Date created: 8/31/2018
-Date last modified: 9/25/2018
+Date created: 9/21/2018
+Date last modified: 9/28/2018
 """
 import datetime
 
@@ -279,7 +279,7 @@ class VideoScanner(TemplateScanner):
 		all_sums = [j.output[0] for j in all_threads]
 		all_lengths = [k.output[1] for k in all_threads]
 
-		return [i for i in all_sums if i >= sum(all_sums) / sum(all_lengths)][4]
+		return sum(all_sums) / sum(all_lengths)
 
 	def thread_scanners(self, video, divisor=400):
 		"""Scans a passed video for the templates belonging to the instance
@@ -296,6 +296,7 @@ class VideoScanner(TemplateScanner):
 			current_frame += divisor
 
 		thresh = self._get_average_match(video, frame_indices)
+		print(f"THIS IS THREASH {thresh}")
 
 		for frames in frame_indices:
 			print(f"I am now scanning {frames}")
