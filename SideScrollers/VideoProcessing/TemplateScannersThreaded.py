@@ -1,12 +1,13 @@
 """A general class for using a template to scan a image using multiple threads
 Author: Matthew Byrd
 Date created: 9/21/2018
-Date last modified: 9/28/2018
+Date last modified: 8/5/2018
 """
 import datetime
 
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 from threading import Thread
 
 RETURN_TIMESTAMPS = 0
@@ -30,7 +31,6 @@ class TemplateScanner:
 		"""
 		h, w = self.cur_best_template.shape[:-1]
 		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(template_results)
-		print("THIS IS MAX {}".format(max_val))
 		top_left = max_loc
 		bottom_right = (top_left[0] + w, top_left[1] + h)
 
@@ -153,7 +153,6 @@ class _VideoThreader(Thread, TemplateScanner):
 		frame_count = self.frame_indexes[1]
 
 		assert frame_count > 0, "FRAME COUNT IS 0. PROBABLY A BROKEN FILE PATH."
-		print(f"I am now scanning {self.frame_indexes}")
 
 		# Minus the frame count by 10 to give a little buffer room so that the video doesnt run out of frames)
 		list_of_maxes = []
@@ -170,6 +169,7 @@ class _VideoThreader(Thread, TemplateScanner):
 
 		sum_and_length = (sum(list_of_maxes), number_scanned)
 		self.output = sum_and_length
+		del video
 
 	def _get_timestamps(self):
 		"""Sets output to a list of datetime.timedelta objects representing where a template was matched
@@ -226,9 +226,8 @@ class _VideoThreader(Thread, TemplateScanner):
 
 				# If the average value is greater than the threshold it's pretty likely there is a jump happening
 				if average >= .5:
+					print(f"EXPORTING : {datetime.timedelta(seconds=video.get(cv2.CAP_PROP_POS_MSEC) / 1000)}")
 					timestamps.append(datetime.timedelta(seconds=video.get(cv2.CAP_PROP_POS_MSEC) / 1000))
-					print(f"This is the time in the video at which this frame is exported "
-					      f"{datetime.timedelta(seconds=video.get(cv2.CAP_PROP_POS_MSEC) / 1000)} ")
 
 					# Get the frame of the first positive frame from the slider and export it
 					index_of_positive = [index for index, value in enumerate(slider) if value == 1][0]
@@ -279,7 +278,9 @@ class VideoScanner(TemplateScanner):
 		all_sums = [j.output[0] for j in all_threads]
 		all_lengths = [k.output[1] for k in all_threads]
 
-		return sum(all_sums) / sum(all_lengths)
+		all_means = [s / l for s, l in zip(all_sums, all_lengths)]
+
+		return sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2
 
 	def thread_scanners(self, video, divisor=400):
 		"""Scans a passed video for the templates belonging to the instance
@@ -296,10 +297,9 @@ class VideoScanner(TemplateScanner):
 			current_frame += divisor
 
 		thresh = self._get_average_match(video, frame_indices)
-		print(f"THIS IS THREASH {thresh}")
 
 		for frames in frame_indices:
-			print(f"I am now scanning {frames}")
+			print(f"SCANNING FRAMES: {frames}")
 			threads = _VideoThreader(self.templates, video, frames, threshold=thresh)
 			self.output.append(threads)
 			threads.start()
