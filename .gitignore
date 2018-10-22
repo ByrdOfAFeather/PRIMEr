@@ -105,6 +105,7 @@ venv.bak/
 
 .idea
 
+
 /BasicGames/ImageProcessing/Sources
 /BasicGames/ImageProcessing/Output
 /BasicGames/ImageProcessing/Results
@@ -112,4 +113,5 @@ venv.bak/
 /SideScrollers/VideoProcessing/Output
 /SideScrollers/VideoProcessing/Results
 /ResourceCreation/
+/WebClientSide/Javascript/html2canvas.js
 
