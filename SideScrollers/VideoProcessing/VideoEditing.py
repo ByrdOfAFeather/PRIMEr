@@ -4,7 +4,7 @@ Date created: 9/28/2018
 Date last modified: 8/5/2018
 """
 
-from TemplateScannersThreaded import VideoScanner
+from TemplateScanners import ThreadedVideoScan
 from threading import Thread
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 import datetime
@@ -13,44 +13,13 @@ LOAD_TIMESTAMPS = False
 
 
 def get_timestamps():
-	class JumpThread(Thread):
-		def __init__(self):
-			Thread.__init__(self)
-			self.output = []
-
-		def run(self):
-			jump_finder = VideoScanner(templates=["OriJumping.png"])  # "MarioFireJumping.png"])
-
-			jump_finder = jump_finder.thread_scanners("Sources/ori.mp4")
-			for threads in jump_finder:
-				threads.join()
-
-			for jump_times in jump_finder:
-				self.output.extend(jump_times.output)
-
-	class RunThread(Thread):
-		def __init__(self):
-			Thread.__init__(self)
-			self.output = []
-
-		def run(self):
-			run_finder = VideoScanner(templates=["OriMoving.png"])  # "MarioFireJumping.png"])
-
-			run_finder = run_finder.thread_scanners("Sources/ori.mp4")
-			for threads in run_finder:
-				threads.join()
-
-			for run_times in run_finder:
-				print(run_times)
-				self.output.extend(run_times.output)
-
-	jumper_thread = JumpThread()
+	jumper_thread = ThreadedVideoScan(["MegaManJumping.png"], "mmlevel1.mp4")
 	print("Running Jumper Thread")
 	jumper_thread.start()
 	jumper_thread.join()
-	runner_thread = RunThread()
+	runner_thread = ThreadedVideoScan(["MegaManMoving.png"], "mmlevel1.mp4")
 	print("Running Runner Thread")
-	runner_thread .start()
+	runner_thread.start()
 	runner_thread.join()
 
 	# gets time stamps marked with what type of action was performed
@@ -81,7 +50,7 @@ else:
 	with open('temp_list_of_timestamps.txt', 'w') as f:
 		f.write(str(timestamps))
 
-text_base = VideoFileClip("JumpOrMove.mp4")
+text_base = VideoFileClip("Sources/JumpOrMove.mp4")
 org_video = VideoFileClip("Sources/ori.mp4")
 
 cur_type = None
