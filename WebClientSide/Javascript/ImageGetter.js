@@ -19,7 +19,7 @@ function screenshot(element, options = {}) {
     });
 }
 
-function test() {
+function exportTemplate() {
     let container = getPreviousRectangle();
 
     let rectangle = container.getElementsByClassName('rectangle')[0];
@@ -58,7 +58,7 @@ function test() {
     }).then(
         function (canvas) {
             var a = document.createElement('a');
-            a.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");;
+            a.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
             document.body.appendChild(canvas);
             a.download = 'somefilename.png';
             a.click();

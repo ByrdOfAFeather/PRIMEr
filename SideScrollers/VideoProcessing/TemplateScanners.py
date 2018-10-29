@@ -18,7 +18,7 @@ class TemplateScanner:
 		self.template_list = templates
 		self.cur_best_template = None
 		self.cur_results = None
-		self.template_list = self._build_image_list("Templates", *self.template_list)
+		self.template_list = self._build_image_list("", *self.template_list)
 
 	def plot_template_match(self, image, template_results, title="Template Matching result", output_title="TEST"):
 		"""Plots the image with the rectangle put on top of it. (Inspired from: https://docs.opencv.org/3.4.3/d4/dc6/tutorial_py_template_matching.html)
@@ -273,6 +273,7 @@ class _VideoThreader(Thread, TemplateScanner):
 		frame_index = self.frame_indexes[0]
 		number_scanned = 0
 		while frame_index < (frame_count - buffer_frames):
+			print(f"SCANNING AT {frame_index}")
 			video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
 			more_frames, frame = video.read()
 			if not more_frames: break
@@ -388,7 +389,7 @@ class VideoScannerThreaded(TemplateScanner):
 			                                 return_values=RETURN_THRESHOLD, output_frames=self.output_frames)
 			all_threads.append(current_threads)
 			current_threads.start()
-		print(len(all_threads))
+		print(f"=== STARTING {len(all_threads)} THREADS ===")
 		[i.join() for i in all_threads]  # joins all the threads returned by the VideoThreader
 		all_sums = [j.output[0] for j in all_threads]
 		all_lengths = [k.output[1] for k in all_threads]
@@ -425,18 +426,29 @@ class VideoScannerThreaded(TemplateScanner):
 
 class ThreadedVideoScan(Thread):
 	def __init__(self, template, video):
+		"""Initialization for ThreadedVideoScanner
+		:param template: A template object containing id, video id, description character, and path
+		:type template: list
+		:param video: A path to a video file
+		:type video: str
+		"""
 		Thread.__init__(self)
-		self.templates_path = template
+		self.templates = template
 		self.video_path = video
 		self.output = []
 
 	def run(self):
-		finder = VideoScannerThreaded(templates=self.templates_path)
+		path_list = []
+		template_marker = self.templates[0].char_descriptor
+		for templates in self.templates: path_list.append(templates.path)
+		print(f"This is path list {path_list}")
+		finder = VideoScannerThreaded(templates=path_list)
 
-		finder = finder.thread_scanners(f"Sources/{self.video_path}")
+		finder = finder.thread_scanners(f"{self.video_path}")
 		for threads in finder:
 			threads.join()
 
 		for times in finder:
-			self.output.extend(times.output)
+			final_output = [template_marker + str(times) for times in times.output]
+			self.output.extend(final_output)
 
