@@ -31,12 +31,16 @@ def edit_video():
 	templates = cursor.fetchall()
 
 	scanners = []
+	modeled_templates = []
 	for template in templates:
 		current_template_id = template[1]
+
 		current_template = Template(current_template_id, DATABASE_PATH)
-		print(video)
+		modeled_templates.append(current_template)
+
 		scanner = ThreadedVideoScan([current_template], video)
 		scanners.append(scanner)
+
 		scanner.start()
 
 	[i.join() for i in scanners]
@@ -44,7 +48,7 @@ def edit_video():
 	final_output = []
 	for scans in scanners: final_output.extend(scans.output)
 	final_output.sort(key=lambda x: x.strip("j").strip("r"))
-	tester = VideoEditor(video, final_output)
+	tester = VideoEditor(video, modeled_templates, final_output)
 	tester.edit()
 	print("Done!")
 

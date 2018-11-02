@@ -1,8 +1,3 @@
-"""A file for identifying the plausibility of using basic image templates to find specifically jumps in mario
-Author: Matthew Byrd
-Date created: 8/31/2018
-Date last modified: 9/18/2018
-"""
 from TemplateScanner import TemplateScanner
 import cv2
 import matplotlib.pyplot as plt

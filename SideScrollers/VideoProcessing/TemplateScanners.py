@@ -1,8 +1,4 @@
-"""A general class for using a template to scan an image
-Author: Matthew Byrd
-Date created: 8/31/2018
-Date last modified: 9/18/2018
-"""
+from .Timestamp import Timestamp
 from threading import Thread
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,7 +26,6 @@ class TemplateScanner:
 		"""
 		h, w = self.cur_best_template.shape[:-1]
 		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(template_results)
-		print("THIS IS MAX {}".format(max_val))
 		top_left = max_loc
 		bottom_right = (top_left[0] + w, top_left[1] + h)
 
@@ -169,7 +164,6 @@ class VideoScanner(TemplateScanner):
 		video = cv2.VideoCapture(video)
 		threshold = self._get_average_match(video)
 		timestamps = []
-		print(f"THE THRESHOLD FOR SEPARATION IS {threshold}")
 
 		frame_counter = 0
 
@@ -273,7 +267,6 @@ class _VideoThreader(Thread, TemplateScanner):
 		frame_index = self.frame_indexes[0]
 		number_scanned = 0
 		while frame_index < (frame_count - buffer_frames):
-			print(f"SCANNING AT {frame_index}")
 			video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
 			more_frames, frame = video.read()
 			if not more_frames: break
@@ -396,7 +389,8 @@ class VideoScannerThreaded(TemplateScanner):
 
 		all_means = [s / l for s, l in zip(all_sums, all_lengths)]
 
-		print(f"THIS IS THREASH : {sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2}")
+		print(f" === THIS IS THREASH FOR {self.template_list[0].char_descriptor}: "
+		      f"{sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2} ===")
 		return sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2
 
 	def thread_scanners(self, video, divisor=400):
@@ -416,7 +410,6 @@ class VideoScannerThreaded(TemplateScanner):
 		thresh = self._get_average_match(video, frame_indices)
 
 		for frames in frame_indices:
-			print(f"SCANNING FRAMES: {frames}")
 			threads = _VideoThreader(self.templates, video, frames, threshold=thresh)
 			self.output.append(threads)
 			threads.start()
@@ -425,15 +418,16 @@ class VideoScannerThreaded(TemplateScanner):
 
 
 class ThreadedVideoScan(Thread):
-	def __init__(self, template, video):
+	def __init__(self, templates, video):
 		"""Initialization for ThreadedVideoScanner
-		:param template: A template object containing id, video id, description character, and path
-		:type template: list
+		:param templates: A template object containing id, video id, description character, and path
+		:type templates: list
 		:param video: A path to a video file
 		:type video: str
 		"""
+		assert len(templates) != 0, "Expected Template List Size Greater Than 0"
 		Thread.__init__(self)
-		self.templates = template
+		self.templates = templates
 		self.video_path = video
 		self.output = []
 
@@ -449,6 +443,6 @@ class ThreadedVideoScan(Thread):
 			threads.join()
 
 		for times in finder:
-			final_output = [template_marker + str(times) for times in times.output]
+			final_output = [Timestamp(template_marker, times) for times in times.output]
 			self.output.extend(final_output)
 

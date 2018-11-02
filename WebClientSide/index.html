@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<div id="video-container" style="border:2px solid black; height: 500px; width: 500px">
+<div id="video-container" style="height: 500px; width: 500px">
     <video id="current-video" controls>
         <source src="Resources/current_video.mp4">
     </video>
@@ -15,6 +15,10 @@
     <canvas id="test-canvas"></canvas>
 </div>
 
+<div id="add-youtube-video" style="position: relative;">
+    <input id="video-link" type="text">
+    <button onclick="loadVideo();">Load Video</button>
+</div>
 <button onclick="exportTemplate();">Add Template</button>
 <button onclick="startEdit();">Finish!</button>
 
@@ -22,5 +26,6 @@
 <script src="Javascript/RectangleDrawing.js"></script>
 <script src="Javascript/ImageGetter.js"></script>
 <script src="Javascript/html2canvas.js"></script>
+<script src="Javascript/loadVideo.js"></script>
 </body>
 </html>

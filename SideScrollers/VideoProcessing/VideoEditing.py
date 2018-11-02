@@ -1,9 +1,3 @@
-"""Code for editing a video
-Author: Matthew Byrd
-Date created: 9/28/2018
-Date last modified: 8/5/2018
-"""
-
 from TemplateScanners import ThreadedVideoScan
 from threading import Thread
 from moviepy.editor import VideoFileClip, concatenate_videoclips
