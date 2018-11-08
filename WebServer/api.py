@@ -47,10 +47,10 @@ def edit_video():
 	print([j.output for j in scanners])
 	final_output = []
 	for scans in scanners: final_output.extend(scans.output)
-	final_output.sort(key=lambda x: x.strip("j").strip("r"))
-	tester = VideoEditor(video, modeled_templates, final_output)
-	tester.edit()
-	print("Done!")
+	final_output.sort(key=lambda x: x.time)
+	tester = VideoEditor(video, final_output)
+	epic = tester.edit()
+	print(epic)
 
 
 class EditVideo(Resource):
@@ -89,7 +89,8 @@ class VideoEndPoint(Resource):
 
 	def put(self):
 		raw_data = request.form["data"]
-		dict_data = json.loads(raw_data)
+		print(raw_data)
+		dict_data = json.loads(raw_data.replace(r'\x3E', '\x3E'))
 		self.add_video(dict_data)
 		return {"added_data": dict_data}
 
@@ -104,7 +105,7 @@ class TemplateEndPoint(Resource):
 		cursor = db.cursor()
 		cursor.execute("""SELECT MAX(VIDEOID) from VIDEOPATHS""")
 		last_id = cursor.fetchall()[0][0]
-
+		print(data_to_add["templates"])
 		templates = parse_list(data_to_add["templates"])
 		chars = parse_list(data_to_add["ordered_chars"])
 		for template, char in zip(templates, chars):
@@ -115,7 +116,7 @@ class TemplateEndPoint(Resource):
 
 	def put(self):
 		raw_data = request.form["data"]
-		dict_data = json.loads(raw_data)
+		dict_data = json.loads(raw_data.replace(r'\x3E', '\x3E'))
 		self.add_template(dict_data)
 
 

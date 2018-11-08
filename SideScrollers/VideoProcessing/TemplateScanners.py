@@ -1,4 +1,4 @@
-from .Timestamp import Timestamp
+from SideScrollers.VideoProcessing.Timestamp import Timestamp
 from threading import Thread
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,15 +10,25 @@ RETURN_THRESHOLD = 1
 
 
 class TemplateScanner:
+	"""A image scanner that has the ability to plot its results
+	Attributes:
+		template_list       A list of numpy matrices representing the templates
+		cur_best_template   The numpy array of the best matched template given a specific image [important when multiple templates represent the same thing]
+		cur_results         The current result of the scan, used for plotting
+	"""
 	def __init__(self, templates):
+		"""Initializer for TemplateScanner
+		:param templates: list of str values representing images that will be overridden with matrices
+		:type templates: list[str]
+		"""
 		self.template_list = templates
 		self.cur_best_template = None
 		self.cur_results = None
-		self.template_list = self._build_image_list("", *self.template_list)
+		self.template_list = self._build_image_list(*self.template_list)
 
 	def plot_template_match(self, image, template_results, title="Template Matching result", output_title="TEST"):
 		"""Plots the image with the rectangle put on top of it. (Inspired from: https://docs.opencv.org/3.4.3/d4/dc6/tutorial_py_template_matching.html)
-		:param image: A cv2.imread() variable of the original image
+		:param image: A numpy representation of a image
 		:param template_results: The results of running the template inside of cv2's matching method
 		:param title: The desired title of the graph
 		:param output_title: the template for outputting files with different names
@@ -38,24 +48,24 @@ class TemplateScanner:
 	@staticmethod
 	def _match_template(image, template, filter_process):
 		"""Returns the evaluation of a template's similarity to an image
-		:param image: A cv2.imread() loaded image
-		:param template: Another cv2.imread() image that is scanned for in image
+		:param image: A numpy representation of a image
+		:param template: Another numpy representation of a image that is scanned for in the other passed image
 		:param filter_process: The type of cv2 equation to use (see: https://docs.opencv.org/3.4.3/df/dfb/group__imgproc__object.html#ga586ebfb0a7fb604b35a23d85391329be)
-		:return: None
+		:type filter_process: str
+		:return: The results of a template match
 		"""
 		filter_process = eval(filter_process)
 		return cv2.matchTemplate(image, template, filter_process)
 
 	@staticmethod
-	def _build_image_list(directory, *image_names):
+	def _build_image_list(*image_names):
 		"""Builds an array of templates based on the passed file names
-		:param directory: The storage location of files
-		:param image_names: File names of templates *note: have to be stored in the /Templates/ directory
-		:return: None
+		:param image_names: File names of templates
+		:return: a template list of numpy arrays
 		"""
 		template_list = []
 		for name in image_names:
-			image_color = cv2.imread(f"{directory}/{name}")
+			image_color = cv2.imread(f"{name}")
 			image_color_flipped = cv2.flip(image_color, 1)
 			template_list.append(image_color)
 			template_list.append(image_color_flipped)
@@ -63,12 +73,13 @@ class TemplateScanner:
 
 	def _get_best_match(self, image):
 		"""Gets the best match given a list of templates
-		:param image:
-		:return:
+		:param image: a numpy representation of an image that is to be scanned for templates
+		:return: the index of best template and the results as well as maximum value of the template
 		"""
 		template_maxes = {}
 		cur_max_index = 0
 		for index, templates in enumerate(self.template_list):
+
 			# Gets the results from cv2's image match on a single template for a single image
 			results = self._match_template(image, templates, "cv2.TM_CCOEFF")
 
@@ -94,18 +105,19 @@ class TemplateScanner:
 	def scan(self, image_list, threshold=0):
 		"""Scans through the images passed to the original class and builds a list of T/F for if the template was found
 		:param image_list: List of images to be scanned
+		:type image_list: list
 		:param threshold: The numeric value at which a template match is to be considered a negative
+		:type threshold: int
 		:return: boolean list of true or false describing when an image was found
 		"""
-		# Loops through all the mario jumping images
+		# Loops through all the images
 		images_with_template = []
 		for image in image_list:
 			template_maxes = {}
 			cur_max_index = 0
 
 			# Loops through all the filter images and finds the most similar one to the current photo [Multi template]
-			if len(self.template_list) > 1:
-				cur_max_index, template_maxes = self._get_best_match(image)
+			if len(self.template_list) > 1: cur_max_index, template_maxes = self._get_best_match(image)
 
 			# Simply gets the max value and results of a single template
 			else:
@@ -123,13 +135,23 @@ class TemplateScanner:
 
 
 class VideoScanner(TemplateScanner):
+	"""A Scanner Aimed at scanning a entire video
+	Attributes:
+		[Inherited] template_list       A list of numpy matrices representing the templates
+		[Inherited] cur_best_template   The numpy array of the best matched template given a specific image [important when multiple templates represent the same thing]
+		[Inherited] cur_results         The current result of the scan, used for plotting
+	"""
 	def __init__(self, templates):
+		"""Initializer for VideoScanner
+		:param templates: list of str values representing images that will be overridden with matrices
+		:type templates: list[str]
+		"""
 		TemplateScanner.__init__(self, templates)
 
 	def _get_average_match(self, video):
 		"""Gets the average match on a video for a classes particular templates
 		:param video: A cv2.VideoCapture object
-		:return: A numerical value representing 5 steps above the average to be used as a threshold
+		:return: A numerical value representing 2 standard deviations above the average to be used as a threshold
 		"""
 		buffer_frames = 10
 		frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -147,17 +169,16 @@ class VideoScanner(TemplateScanner):
 
 			i += 10
 
-		# Reset and the video
+		# Reset the video
 		video.set(1, 0)
 
-		average = sum(list_of_maxes) / len(list_of_maxes)
-		threshold = [i for i in list_of_maxes if i > average][5]
+		threshold = sum(list_of_maxes) / len(list_of_maxes) + (np.std(list_of_maxes) / 2)
 		return threshold
 
 	def scan_video(self, video, output_generic="", save_frames=False):
 		"""Scans a passed video for the templates belonging to the instance
 		:param video: A path to a video file (AVI, MP4, ETC)
-		:param output_generic: The generic file name for each frame where a template is found
+		:param output_generic: The generic output file name for each frame where a template is found
 		:param save_frames: If set to true each positive frame will be exported as an image
 		:return: a list of timestamps where a particular template was found
 		"""
@@ -173,7 +194,7 @@ class VideoScanner(TemplateScanner):
 		# Slider to keep track of the image frames as corresponding to the original slider
 		image_slider = [0, 0, 0, 0, 0, 0]
 
-		# Defaults the skip index to -1 so as to not create an infinite loop
+		# Defaults the skip index to -1 as to not create an infinite loop
 		skip_index = -1
 
 		while True:
@@ -235,11 +256,30 @@ class VideoScanner(TemplateScanner):
 
 class _VideoThreader(Thread, TemplateScanner):
 	"""A private class to be used in conjunction with VideoScanner to scan a video across multiple threads
+	Attributes:
+		[Inherited] template_list       A list of numpy matrices representing the templates
+		[Inherited] cur_best_template   The numpy array of the best matched template given a specific image [important when multiple templates represent the same thing]
+		[Inherited] cur_results         The current result of the scan, used for plotting
+		video_path                      A path to the video this scanner is responsible for scanning
+		frame_indexes                   The part of the video this scanner is responsible for scanning
+		output_frames                   If it should output frames [DEPRECIATED]
+		file_naming_pattern             If outputting frame, the generic name for the outputted frames
+		return_value                    The type of values to be returned (Threshold or Timestamps)
+		output                          Due to the nature of threading, the return value for this thread, either a specific threashold or a list of timestamps
 	"""
 	def __init__(self, templates, video_path, frame_indexes,
 	             threshold, output_frames=False, file_naming_pattern="Level",
 	             return_values=RETURN_TIMESTAMPS
 	             ):
+		"""Initializer for _VideoThreader
+		Parameters and their functions defined in class description
+		:type templates: list[str]
+		:type video_path: str
+		:type frame_indexes: tuple
+		:type output_frames: bool
+		:type file_naming_pattern: str
+		:type return_values: int
+		"""
 		Thread.__init__(self)
 		TemplateScanner.__init__(self, templates=templates)
 		self.video_path = video_path
@@ -248,7 +288,7 @@ class _VideoThreader(Thread, TemplateScanner):
 		self.output_frames = output_frames
 		self.output_generic = file_naming_pattern
 		self.return_value = return_values
-		self.output = []
+		self.output = None
 
 	def _get_threshold(self):
 		"""Sets output to a list of tuples (sum of all matches in frames, number of matches attempted)
@@ -343,6 +383,7 @@ class _VideoThreader(Thread, TemplateScanner):
 
 					if self.output_frames:
 						frame_count = video.get(cv2.CAP_PROP_POS_FRAMES)
+
 						self.plot_template_match(image_slider[index_of_positive], self.cur_results[0],
 						                         output_title=f"{self.output_generic}{frame_count}")
 
@@ -352,6 +393,7 @@ class _VideoThreader(Thread, TemplateScanner):
 			else:
 				break
 		del video
+
 		self.output = timestamps
 
 	def run(self):
@@ -362,9 +404,20 @@ class _VideoThreader(Thread, TemplateScanner):
 
 
 class VideoScannerThreaded(TemplateScanner):
+	"""A class representing a threaded video scanner
+	Attributes:
+		[Inherited] template_list       A list of numpy matrices representing the templates
+		[Inherited] cur_best_template   The numpy array of the best matched template given a specific image [important when multiple templates represent the same thing]
+		[Inherited] cur_results         The current result of the scan, used for plotting
+		output                          The output of this class
+		templates                       A container of the path values of the templates
+		output_frames                   If it should output frames [DEPRECIATED]
+	"""
 	def __init__(self, templates, output_frames=False):
-		"""defines a multi-threaded scanner
-		:param templates: templates to scan videos with
+		"""Initializer for VideoScannerThreaded
+		Parameters and their functions defined in class description
+		:type templates: list[str]
+		:type output_frames: bool
 		"""
 		TemplateScanner.__init__(self, templates)  # While still a scanner, uses no methods in TemplateScanner
 		self.output = []
@@ -377,6 +430,7 @@ class VideoScannerThreaded(TemplateScanner):
 		:return: A numerical value representing 5 steps above the average to be used as a threshold
 		"""
 		all_threads = []
+		assert frame_indicies, "NO FRAME INDICES WERE PASSED! BREAKING!"
 		for frames in frame_indicies:
 			current_threads = _VideoThreader(self.templates, video, frames, threshold=None,
 			                                 return_values=RETURN_THRESHOLD, output_frames=self.output_frames)
@@ -389,7 +443,7 @@ class VideoScannerThreaded(TemplateScanner):
 
 		all_means = [s / l for s, l in zip(all_sums, all_lengths)]
 
-		print(f" === THIS IS THREASH FOR {self.template_list[0].char_descriptor}: "
+		print(f" === THIS IS THREASH: "
 		      f"{sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2} ===")
 		return sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2
 
@@ -400,7 +454,11 @@ class VideoScannerThreaded(TemplateScanner):
 		:return: a list of timestamps where a particular template was found
 		"""
 		loaded_video = cv2.VideoCapture(video)
+
 		frame_count = loaded_video.get(cv2.CAP_PROP_FRAME_COUNT)
+
+		assert frame_count, "NO FRAMES WERE DETECTED! BREAKING!"
+
 		frame_indices = []
 		current_frame = 0
 		while frame_count > divisor * len(frame_indices):
@@ -418,11 +476,16 @@ class VideoScannerThreaded(TemplateScanner):
 
 
 class ThreadedVideoScan(Thread):
+	"""Allows for multiple templates representing different things to scan the video at the same time
+	Attributes:
+		templates   A list of template objects
+		video_path  A path to the video that this thread is responsible for
+		output      Due to the nature of threads, the output of the run function
+	"""
 	def __init__(self, templates, video):
 		"""Initialization for ThreadedVideoScanner
-		:param templates: A template object containing id, video id, description character, and path
-		:type templates: list
-		:param video: A path to a video file
+		Parameters and their functions defined in class description
+		:type templates: list[Template]
 		:type video: str
 		"""
 		assert len(templates) != 0, "Expected Template List Size Greater Than 0"
@@ -435,7 +498,6 @@ class ThreadedVideoScan(Thread):
 		path_list = []
 		template_marker = self.templates[0].char_descriptor
 		for templates in self.templates: path_list.append(templates.path)
-		print(f"This is path list {path_list}")
 		finder = VideoScannerThreaded(templates=path_list)
 
 		finder = finder.thread_scanners(f"{self.video_path}")
