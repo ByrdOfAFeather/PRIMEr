@@ -14,8 +14,6 @@ Tar Heel Gameplay: http://tarheelgameplay.org
 
 ![Example of MegaMan gameplay](https://media.giphy.com/media/orUbZQZal7sqbbF9Z3/giphy.gif)
 
-<a href=""></a>
-
 <h1 align="center"> Built With </h1>
 
 openCV: https://github.com/opencv/opencv
