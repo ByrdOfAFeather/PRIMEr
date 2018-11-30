@@ -6,6 +6,7 @@ from SideScrollers.VideoProcessing.Template import Template
 from SideScrollers.VideoProcessing.VideoEditors import VideoEditor
 import sqlite3 as sql
 import json
+import urllib
 
 
 primer_server = Flask(__name__)
@@ -32,6 +33,7 @@ def edit_video():
 
 	scanners = []
 	modeled_templates = []
+
 	for template in templates:
 		current_template_id = template[1]
 
@@ -50,7 +52,13 @@ def edit_video():
 	final_output.sort(key=lambda x: x.time)
 	tester = VideoEditor(video, final_output)
 	epic = tester.edit()
-	print(epic)
+	print(str(epic))
+	print(type(epic))
+	epic_json = str(epic).replace("'", '"')
+	data = urllib.parse.urlencode([('gp', epic_json)])
+	with urllib.request.urlopen("https://tarheelgameplay.org/play", data=data.encode('utf-8')) as fp:
+		result = fp.read()
+	return result
 
 
 class EditVideo(Resource):
@@ -59,8 +67,8 @@ class EditVideo(Resource):
 
 	@staticmethod
 	def get():
-		edit_video()
-		return {"STATUS": "SUCCESS"}
+		link = edit_video()
+		return {"LINK": str(link)}
 
 
 class AddEndPoint(Resource):

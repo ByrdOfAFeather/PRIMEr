@@ -11,7 +11,7 @@ class VideoEditor:
 	"""
 	def __init__(self, video, timestamps):
 		"""Initialization of the class
-		:type video: str
+		:type video: int
 		:type timestamps: list[Timestamp]
 		"""
 		self.FINAL_ITEM_IN_LIST = -1
@@ -20,7 +20,6 @@ class VideoEditor:
 		self.timestamps = timestamps
 
 	def get_nearest_descriptors(self, start_index, max_time_from_current):
-
 		if start_index + 1 >= len(self.timestamps) - 1:
 			return self.FINAL_ITEM_IN_LIST
 
@@ -31,6 +30,7 @@ class VideoEditor:
 		delete_list = []
 		end_index = 0
 
+		multi_commands = []
 		for index, timestamps in enumerate(sub_timestamps):
 			if timestamps.marker == self.timestamps[start_index].marker:
 				delete_list.append(timestamps)
@@ -38,6 +38,8 @@ class VideoEditor:
 			if timestamps.time - self.timestamps[start_index].time >= max_time_from_current:
 				end_index = index + start_index
 				break
+
+		if multi_commands: pass
 
 		return_list = self.timestamps[start_index:end_index]
 		return_list = [item for item in return_list if item not in delete_list]
@@ -48,13 +50,23 @@ class VideoEditor:
 		return return_list
 
 	def edit(self):
+		all_markers = []
+		for timestamp in self.timestamps:
+			if timestamp.marker not in all_markers:
+				all_markers.append(timestamp.marker)
+
+		print(self.timestamps[-1].time)
 
 		game_information = {
-			"videoId": self.video,
-			"start": 0
+			"videoId": "QsRDMTdGvPM",
+			"start": 0,
+			"vocabulary": f"{all_markers}".replace("[", "").replace("]", "").replace(",", "").replace("'", ""),
+			"tags": ["advanced"],
+			"kind": "advanced",
+			"duration": int(self.timestamps[-1].time.total_seconds()),
+			"dof": 2,
 		}
 
-		all_markers = [m.marker for m in self.timestamps]
 		print("=== STARTING EDITING INFORMATION ===")
 		print(f"NUMBER OF UNIQUE TEMPLATE DESCRIPTORS: {len(all_markers)}")
 		print(f"TEMPLATE DESCRIPTORS: {all_markers}")
@@ -66,7 +78,7 @@ class VideoEditor:
 		while index_of_timestamps < len(self.timestamps) - 1:
 			current_class = self.timestamps[index_of_timestamps].marker
 
-			nearest_times = self.get_nearest_descriptors(index_of_timestamps, datetime.timedelta(seconds=2))
+			nearest_times = self.get_nearest_descriptors(index_of_timestamps, datetime.timedelta(seconds=4))
 			print(nearest_times)
 			if nearest_times == self.FINAL_ITEM_IN_LIST: break
 			if nearest_times == self.NO_APPLICABLE_CHOICES:
@@ -76,7 +88,7 @@ class VideoEditor:
 			choices = [
 				{
 					"prompt": current_class,
-					"next": self.timestamps[index_of_timestamps].time
+					"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2)
 				}
 			]
 
@@ -86,14 +98,14 @@ class VideoEditor:
 					choices.append(
 						{
 							"prompt": nearby_time.marker,
-							"next": nearby_time.time
+							"next": round(nearby_time.time.total_seconds(), 2)
 						}
 					)
 				descriptor_tracker.append(nearby_time.marker)
 
 			timepoints.append(
 				{
-					"time": self.timestamps[index_of_timestamps].time,
+					"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
 					"choices": choices
 				}
 			)
@@ -101,5 +113,6 @@ class VideoEditor:
 			index_of_timestamps += len(nearest_times) + 1
 
 		game_information["timePoints"] = timepoints
+		game_information["hits"] = len(timepoints)
 		return game_information
 

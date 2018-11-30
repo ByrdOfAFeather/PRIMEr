@@ -4,6 +4,18 @@ A project to semi-automate Tar Heel Gameplay
 
 Tar Heel Gameplay: http://tarheelgameplay.org
 
+<h1 align="center"> Results </h1>
+
+### <a href="tarheelgameplay.org/play/?key=dominic-juliet-command">3D Sonic</a>
+
+![Alt Text](https://media.giphy.com/media/wsWQnZRvp0luT0fHzo/giphy.gif)
+
+### <a href="https://tarheelgameplay.org/play/?key=temple-eric-powder">Mega Man</a>
+
+![](https://media.giphy.com/media/orUbZQZal7sqbbF9Z3/giphy.gif)
+
+<a href=""></a>
+
 <h1 align="center"> Built With </h1>
 
 openCV: https://github.com/opencv/opencv

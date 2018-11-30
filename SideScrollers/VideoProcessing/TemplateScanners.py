@@ -172,7 +172,7 @@ class VideoScanner(TemplateScanner):
 		# Reset the video
 		video.set(1, 0)
 
-		threshold = sum(list_of_maxes) / len(list_of_maxes) + (np.std(list_of_maxes) / 2)
+		threshold = sum(list_of_maxes) / len(list_of_maxes) + (np.std(list_of_maxes))
 		return threshold
 
 	def scan_video(self, video, output_generic="", save_frames=False):
@@ -189,10 +189,10 @@ class VideoScanner(TemplateScanner):
 		frame_counter = 0
 
 		# Slider as to not get all frames of a single jump, instead only getting as close to the first one as possible
-		slider = [0, 0, 0, 0, 0, 0]
+		slider = [0, 0, 0, 0, 0, 0, 0]
 
 		# Slider to keep track of the image frames as corresponding to the original slider
-		image_slider = [0, 0, 0, 0, 0, 0]
+		image_slider = [0, 0, 0, 0, 0, 0, 0]
 
 		# Defaults the skip index to -1 as to not create an infinite loop
 		skip_index = -1
@@ -209,8 +209,8 @@ class VideoScanner(TemplateScanner):
 				skip_index += 1
 				frame += 1
 
-				slider = [0, 0, 0, 0, 0, 0, 0]
-				image_slider = [0, 0, 0, 0, 0, 0, 0]
+				slider = [0, 0, 0, 0, 0, 0, 0, 0]
+				image_slider = [0, 0, 0, 0, 0, 0, 0, 0]
 
 				continue
 
@@ -331,10 +331,10 @@ class _VideoThreader(Thread, TemplateScanner):
 		video.set(cv2.CAP_PROP_POS_FRAMES, self.frame_indexes[0])
 
 		# Slider as to not get all frames of a single jump, instead only getting as close to the first one as possible
-		slider = [0, 0, 0, 0, 0, 0]
+		slider = [0, 0, 0, 0, 0, 0, 0, 0]
 
 		# Slider to keep track of the image frames as corresponding to the original slider
-		image_slider = [0, 0, 0, 0, 0, 0]
+		image_slider = [0, 0, 0, 0, 0, 0, 0, 0]
 
 		# Defaults the skip index to -1 so as to not create an infinite loop
 		skip_index = -1
@@ -355,8 +355,8 @@ class _VideoThreader(Thread, TemplateScanner):
 					skip_index += 1
 					frame += 1
 
-					slider = [0, 0, 0, 0, 0, 0, 0]
-					image_slider = [0, 0, 0, 0, 0, 0, 0]
+					slider = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+					image_slider = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 					continue
 
@@ -444,8 +444,8 @@ class VideoScannerThreaded(TemplateScanner):
 		all_means = [s / l for s, l in zip(all_sums, all_lengths)]
 
 		print(f" === THIS IS THREASH: "
-		      f"{sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2} ===")
-		return sum(all_sums) / sum(all_lengths) + np.std(all_means) / 2
+		      f"{sum(all_sums) / sum(all_lengths) + np.std(all_means)} ===")
+		return sum(all_sums) / sum(all_lengths) + np.std(all_means)
 
 	def thread_scanners(self, video, divisor=400):
 		"""Scans a passed video for the templates belonging to the instance

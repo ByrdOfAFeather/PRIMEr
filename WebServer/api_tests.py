@@ -6,10 +6,11 @@ import json
 
 BASE_URL = "http://127.0.0.1:5000/"
 
+video_path = r"C:\\Users\\matth\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources"
+template_path = r"C:\\Users\\matth\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Templates"
+
 
 def put_video_template_data():
-	video_path = r"C:\\Users\\Matthew Byrd\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources"
-	template_path = r"C:\\Users\\Matthew Byrd\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Templates"
 
 	video = video_path + "\\mmlevel1.mp4"
 	template_1 = template_path + "\\MegaManMoving.png"
@@ -20,18 +21,17 @@ def put_video_template_data():
 
 
 def put_video():
-	video_path = r"C:\\Users\\Matthew Byrd\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources\\mmlevel1.mp4"
+	video_path = r"C:\\Users\\matth\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources\\mmlevel3.mp4"
 	requests.put(BASE_URL + "add/video/", data={"data": "{{\"video\":\"{}\"}}".format(video_path)})
 
 
 def put_template():
-	template_path_1 = r"C:\\Users\\Matthew Byrd\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Templates"
-	template_1 = template_path_1 + r"\\MegaManMoving.png"
-	template_2 = template_path_1 + r"\\MegaManJumping.png"
-	template_3 = template_path_1 + r"\\MegaManAttacking.png"
-	template_1_char = "r"
-	template_2_char = "j"
-	template_3_char= "a"
+	template_1 = template_path + r"\\MegaManMoving.png"
+	template_2 = template_path + r"\\MegaManJumping.png"
+	template_3 = template_path + r"\\MegaManAttacking.png"
+	template_1_char = "Run"
+	template_2_char = "Jump"
+	template_3_char = "Attack"
 	requests.put(BASE_URL + "add/template/", data={"data": "{{\"templates\": \"[{}, {}, {}]\", "
 	                                                       "\"ordered_chars\": \"[{}, {}, {}]\"}}".format(template_1,
 	                                                                                                      template_2,
@@ -44,7 +44,9 @@ def put_template():
 	             )
 
 
-def edit_video(): requests.get(BASE_URL + "edit/")
+def edit_video():
+	edit_r = requests.get(BASE_URL + "edit/")
+	print(edit_r.content)
 
 
 if __name__ == "__main__":
