@@ -12,7 +12,7 @@ Tar Heel Gameplay: http://tarheelgameplay.org
 
 ### <a href="https://tarheelgameplay.org/play/?key=temple-eric-powder">Mega Man</a>
 
-![Example of MegaMan gameplay](https://media.giphy.com/media/orUbZQZal7sqbbF9Z3/giphy.gif)
+![Example of MegaMan gameplay](https://media.giphy.com/media/5UJpxtcU8f9eAoZKgw/giphy.gif)
 
 <h1 align="center"> Built With </h1>
 
