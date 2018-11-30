@@ -8,11 +8,11 @@ Tar Heel Gameplay: http://tarheelgameplay.org
 
 ### <a href="tarheelgameplay.org/play/?key=dominic-juliet-command">3D Sonic</a>
 
-![Alt Text](https://media.giphy.com/media/wsWQnZRvp0luT0fHzo/giphy.gif)
+![Example of sonic gameplay](https://media.giphy.com/media/wsWQnZRvp0luT0fHzo/giphy.gif)
 
 ### <a href="https://tarheelgameplay.org/play/?key=temple-eric-powder">Mega Man</a>
 
-![](https://media.giphy.com/media/orUbZQZal7sqbbF9Z3/giphy.gif)
+![Example of MegaMan gameplay](https://media.giphy.com/media/orUbZQZal7sqbbF9Z3/giphy.gif)
 
 <a href=""></a>
 
