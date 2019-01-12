@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/style.css">
+    <meta charset="UTF-8">
+    <title>Image Selector</title>
+</head>
+
+<body>
+
+<!--- Loads the video --->
+<div id="video-container">
+    <video id="current-video" controls="controls">
+        <source src="../static/Resources/picklerick.mp4">
+    </video>
+
+    <canvas id="test-canvas"></canvas>
+</div>
+
+<div id="screengrab-container" style="">
+</div>
+
+<!--- Adds templates to the database --->
+<div id="button-options">
+    <label class="tar-heel-label" for="new-template-type">Add New Action Type:
+        <input  id="new-template-type" type="text" placeholder="Action Name">
+        <button id="new-template-button" class="tar-heel-button" onclick="addNewTemplate();">Add</button>
+    </label>
+
+
+    <button id="template-drop-down-button" class="tar-heel-button drop-down" onclick="showDropDown();">
+        Select Action Type</button>
+
+    <div id="template-drop-down-contents" class="drop-down-contents">
+    </div>
+
+    <button id="export_button" class="tar-heel-button" onclick="exportTemplate();">Add Action Example</button>
+
+    <button id="grab-screen-button" class="tar-heel-button drop-down" onclick="grabScreen();">
+        Capture Current Screen</button>
+
+    <button id="finish-button" class="tar-heel-button" onclick="finish();">Finish</button>
+</div>
+
+<!--- Scripts for rectangles --->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="../static/Javascript/selectors.js"></script>
+<script src="../static/Javascript/templates.js"></script>
+<script src="../static/Javascript/html2canvas.js"></script>
+</body>
+</html>

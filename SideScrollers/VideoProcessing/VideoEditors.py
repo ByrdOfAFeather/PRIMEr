@@ -9,15 +9,17 @@ class VideoEditor:
 		video                   The path to the video for which this is responsible for editing
 		timestamps              A list of timestamps with their markers, which is what the edit is based on
 	"""
-	def __init__(self, video, timestamps):
+	def __init__(self, video, timestamps, video_id):
 		"""Initialization of the class
 		:type video: int
 		:type timestamps: list[Timestamp]
+		:type video_id: str
 		"""
 		self.FINAL_ITEM_IN_LIST = -1
 		self.NO_APPLICABLE_CHOICES = -2
 		self.video = video
 		self.timestamps = timestamps
+		self.video_id = video_id
 
 	def get_nearest_descriptors(self, start_index, max_time_from_current):
 		if start_index + 1 >= len(self.timestamps) - 1:
@@ -58,7 +60,7 @@ class VideoEditor:
 		print(self.timestamps[-1].time)
 
 		game_information = {
-			"videoId": "QsRDMTdGvPM",
+			"videoId": f"{self.video_id}",
 			"start": 0,
 			"vocabulary": f"{all_markers}".replace("[", "").replace("]", "").replace(",", "").replace("'", ""),
 			"tags": ["advanced"],

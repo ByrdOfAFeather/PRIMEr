@@ -1,0 +1,81 @@
+#test-canvas {
+    width:0px;
+    height:0px;
+    background-color: white;
+}
+
+.rectangle {
+    border: 1px solid #FF0000;
+    position: absolute;
+}
+
+#button-options {
+    position: relative;
+    display: inline-block;
+}
+
+#new-template-button {
+    background-color: #6094ba;
+}
+
+#new-template-button:hover {
+    background-color: #6ba0c7;
+}
+
+.tar-heel-button {
+    background-color: #7BAFD4;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.tar-heel-button:hover, .tar-heel-button:focus {
+    background-color: #6094ba;
+}
+
+.drop-down-contents {
+    display: none;
+    position: absolute;
+    overflow: auto;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+}
+
+.drop-down-contents a {
+    color: black;
+    padding: 12px 16px;
+    display: block;
+    text-decoration: none;
+}
+
+.drop-down-contents p:hover {
+    background-color: #6094ba;
+}
+
+.show {
+    display: block;
+}
+
+.tar-heel-label {
+    background-color: #7BAFD4;
+    color: white;
+    font-style: normal;
+    font-family: Arial;
+    font-size: 16px;
+    display: inline-block;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.delete-button {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    padding-left: 5px;
+
+
+}
+

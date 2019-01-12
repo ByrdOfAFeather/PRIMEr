@@ -4,52 +4,49 @@ Note that endpoints are subject to change and some functions may brake as a resu
 import requests
 import json
 
-BASE_URL = "http://127.0.0.1:5000/"
+BASE_URL = "http://127.0.0.1:5001/api/"
 
-video_path = r"C:\\Users\\matth\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources"
-template_path = r"C:\\Users\\matth\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Templates"
+video_path = r"P:\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources"
+template_path = r"P:\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Templates"
+
+# video_path = r"C:\\Users\\Matthew Byrd\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources"
+# template_path = r"C:\\Users\\Matthew Byrd\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Templates"
 
 
 def put_video_template_data():
+	template_1 = template_path + r"\\TestMMJumping.png"
+	template_2 = template_path + r"\\TestMegaManMoving.png"
+	template_3 = template_path + r"\\TestMegaManAttacking.png"
+	vid = video_path + r"\\mmlong.mp4"
 
-	video = video_path + "\\mmlevel1.mp4"
-	template_1 = template_path + "\\MegaManMoving.png"
-	template_2 = template_path + "\\MegaManJumping.png"
-	requests.put(BASE_URL + "edit/", data={"data": "{{\"video\":\"{}\", \"templates\": \"[{}, {}]\"}}".format(video,
-	                                                                                                        template_1,
-	                                                                                                        template_2)})
-
-
-def put_video():
-	video_path = r"C:\\Users\\matth\\OneDrive\\ByrdOfAFeather\\Python\\PRIMEr\\SideScrollers\\VideoProcessing\\Sources\\mmlevel3.mp4"
-	requests.put(BASE_URL + "add/video/", data={"data": "{{\"video\":\"{}\"}}".format(video_path)})
-
-
-def put_template():
-	template_1 = template_path + r"\\MegaManMoving.png"
-	template_2 = template_path + r"\\MegaManJumping.png"
-	template_3 = template_path + r"\\MegaManAttacking.png"
-	template_1_char = "Run"
-	template_2_char = "Jump"
+	template_1_char = "Jumping"
+	template_2_char = "Run"
 	template_3_char = "Attack"
-	requests.put(BASE_URL + "add/template/", data={"data": "{{\"templates\": \"[{}, {}, {}]\", "
-	                                                       "\"ordered_chars\": \"[{}, {}, {}]\"}}".format(template_1,
-	                                                                                                      template_2,
-	                                                                                                      template_3,
-	                                                                                                      template_1_char,
-	                                                                                                      template_2_char,
-                                                                                                          template_3_char,
-	                                                                                                      )
-	                                               }
-	             )
+
+	put_r = requests.put(BASE_URL + "add/", data={"data": "{{\"templates\": \"[{}, {}, {}]\", "
+	                                                      "\"ordered_chars\": \"[{}, {}, {}]\","
+	                                                      "\"video\": \"{}\"}}".format(template_1,
+	                                                                                   template_2,
+	                                                                                   template_3,
+	                                                                                   template_1_char,
+	                                                                                   template_2_char,
+	                                                                                   template_3_char,
+	                                                                                   vid
+	                                                                                   )
+	                                              }
+	                     )
+	return put_r.json()["VIDEO ID"]
 
 
-def edit_video():
-	edit_r = requests.get(BASE_URL + "edit/")
+def edit_video(most_recent_id):
+	edit_r = requests.put(BASE_URL + "edit/", data={"data": "{{\"video_id\": \"{}\", "
+	                                                        "\"yt_id\": \"{}\"}}".format(most_recent_id,
+	                                                                                     "NP697v8WtkU")})
 	print(edit_r.content)
 
 
 if __name__ == "__main__":
-	put_video()
-	put_template()
-	edit_video()
+	print("PRINTING")
+	video_id = put_video_template_data()
+	print("DONE PRINTING")
+	edit_video(video_id)

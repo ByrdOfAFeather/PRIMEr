@@ -1,0 +1,196 @@
+let currentTemplateType = null;
+
+let actionTemplateDict = {};
+
+// CREDIT (Inspired from)
+// Kaiido
+// https://stackoverflow.com/a/41195171/8448827
+function screenshot(element, options = {}, set_id=false) {
+    let cropper = document.createElement('canvas').getContext('2d');
+    if (set_id) {
+        cropper.canvas.id = "output-screengrab";
+    }
+
+    let finalWidth = options.width;
+    let finalHeight = options.height;
+
+    return html2canvas(element, options).then(c => {
+        cropper.canvas.width = finalWidth;
+        cropper.canvas.height = finalHeight;
+        cropper.drawImage(c, 0, 0);
+        return cropper.canvas;
+    });
+}
+
+function exportTemplate() {
+    let container = getPreviousRectangle();
+
+    let rectangle = container.getElementsByClassName('rectangle')[0];
+    let rectangleX = parseInt(rectangle.style.left, 10);
+    let rectangleY = parseInt(rectangle.style.top, 10);
+    let rectangleHeight = parseInt(rectangle.style.height, 10);
+    let rectangleWidth = parseInt(rectangle.style.width, 10);
+
+    let canvas = document.getElementById("test-canvas");
+    let ctx = canvas.getContext("2d");
+    let v = document.getElementById("output-screengrab");
+
+    // CREDIT
+    // Brain Mayo
+    // https://dev.to/protium/javascript-rendering-videos-with-html2canvas-3bk
+    let w = v.width;
+    let h = v.height;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(v, 0, 0, w, h);
+    v.style.backgroundImage = `url(${canvas.toDataURL()})`;
+    canvas.height = 0;
+    canvas.width = 0;
+    v.style.backgroundSize = 'cover';
+    ctx.clearRect(0, 0, w, h);
+    // END CREDIT
+
+    screenshot(document.body, {
+        x: rectangleX,
+        y: rectangleY,
+        width: rectangleWidth,
+        height: rectangleHeight,
+        useCORS: true,
+        allowTaint: true
+    }).then(
+        function (canvas) {
+            let currentTypeSelected = document.getElementById("template-drop-down-button").innerText;
+            let image = canvas.toDataURL();
+            let modImage = image.slice(22);
+            actionTemplateDict[currentTypeSelected].push(modImage);
+            document.body.appendChild(canvas);
+        }
+    )
+}
+
+function grabScreen() {
+    let video = document.getElementById('current-video');
+
+    let videoX = parseInt(video.style.left, 10);
+    let videoY = parseInt(video.style.top, 10);
+    let videoHeight = parseInt(video.videoHeight, 10);
+    let videoWidth = parseInt(video.videoWidth, 10);
+
+    let canvas = document.getElementById("test-canvas");
+    let ctx = canvas.getContext("2d");
+
+    // CREDIT
+    // Brain Mayo
+    // https://dev.to/protium/javascript-rendering-videos-with-html2canvas-3bk
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+    ctx.fillRect(0, 0, videoWidth, videoHeight);
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+    video.style.backgroundImage = `url(${canvas.toDataURL()})`;
+    canvas.height = 0;
+    canvas.width = 0;
+    video.style.backgroundSize = 'cover';
+    ctx.clearRect(0, 0, videoWidth, videoHeight);
+    // END CREDIT
+
+    screenshot(document.body, {
+        x: videoX,
+        y: videoY,
+        width: videoWidth,
+        height: videoHeight,
+        useCORS: true
+    }, true).then(
+        function (canvas) {
+            let currentScreenCap = document.getElementById("output-screengrab");
+            if (currentScreenCap) {
+                currentScreenCap.parentNode.removeChild(currentScreenCap);
+            }
+            let screengrabContainer = document.getElementById("screengrab-container");
+            screengrabContainer.appendChild(canvas);
+            initDraw(screengrabContainer);
+        }
+    )
+}
+
+function setCurrentTemplateType(clickEvent) {
+    let selector = document.getElementById("template-drop-down-button");
+    if (clickEvent.target.tagName === "IMG") {
+        currentTemplateType = "";
+        selector.innerText = "Select Action Type";
+        return;
+    }
+    currentTemplateType = clickEvent.target.text;
+    selector.innerText = currentTemplateType;
+}
+
+function deleteTemplate(event) {
+    let currentActionTypeToDelete = event.target.parentNode;
+    document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDelete);
+    delete actionTemplateDict[currentActionTypeToDelete];
+}
+
+function addNewTemplate() {
+    let templateNameInput = document.getElementById("new-template-type");
+    let newTemplateType = templateNameInput.value;
+    templateNameInput.value = "";
+    let addedTemplateType = document.createElement("a");
+    addedTemplateType.href = "#";
+    addedTemplateType.onclick = function (event) {setCurrentTemplateType(event);};
+    addedTemplateType.textContent = newTemplateType;
+
+    let templateImage = document.createElement("img");
+    templateImage.className = "delete-button";
+    templateImage.src = "../static/Resources/deletebutton.png";
+    templateImage.alt = "delete";
+    templateImage.onclick = function(event) { event.preventDefault(); deleteTemplate(event); };
+    addedTemplateType.appendChild(templateImage);
+    document.getElementById("template-drop-down-contents").appendChild(addedTemplateType);
+
+    actionTemplateDict[newTemplateType] = [];
+}
+
+function showDropDown() {
+    document.getElementById("template-drop-down-contents").classList.toggle("show");
+}
+
+function finish() {
+    let data = {};
+    data["templates"] = actionTemplateDict;
+    let json = JSON.stringify(data);
+    console.log(json);
+    $.ajax({
+        url: 'http://127.0.0.1:5001/api/test/',
+        method: 'PUT',
+        dataType: 'json',
+        data: {
+            data: json
+        },
+        success: function (results) {
+            console.log("yay");
+        },
+        error: function (results) {
+            console.log(results);
+        }
+    });
+}
+
+window.onclick = function(event) {
+    if (!event.target.matches('.drop-down')) {
+        var dropdowns = document.getElementsByClassName("drop-down-contents");
+        var i;
+        for (i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+};
+
+window.onkeypress = function(event) {
+    if (event.key === "Enter" && event.target === document.getElementById("new-template-type")) {
+        addNewTemplate();
+    }
+};
+

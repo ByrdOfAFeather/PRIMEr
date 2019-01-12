@@ -1,5 +1,4 @@
 import sqlite3
-import codecs
 
 
 class Template:
@@ -33,3 +32,4 @@ class Template:
 		results = results[0][0]  # The sql returns in a tuple in a list
 		if strip: results = results.lstrip()
 		return results
+
