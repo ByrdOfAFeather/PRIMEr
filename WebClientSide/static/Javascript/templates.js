@@ -1,5 +1,5 @@
 let currentTemplateType = null;
-
+let currentVideo = null;
 let actionTemplateDict = {};
 
 // CREDIT (Inspired from)
@@ -125,9 +125,9 @@ function setCurrentTemplateType(clickEvent) {
 }
 
 function deleteTemplate(event) {
-    let currentActionTypeToDelete = event.target.parentNode;
-    document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDelete);
-    delete actionTemplateDict[currentActionTypeToDelete];
+    let currentActionTypeToDeleteNode = event.target.parentNode;
+    document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDeleteNode);
+    delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
 }
 
 function addNewTemplate() {
@@ -157,30 +157,40 @@ function showDropDown() {
 function finish() {
     let data = {};
     data["templates"] = actionTemplateDict;
+    data["videoID"] = currentVideo;
     let json = JSON.stringify(data);
     console.log(json);
     $.ajax({
-        url: 'http://127.0.0.1:5001/api/test/',
+        url: 'http://127.0.0.1:5001/api/startedit/',
         method: 'PUT',
         dataType: 'json',
         data: {
             data: json
         },
-        success: function (results) {
-            console.log("yay");
-        },
-        error: function (results) {
-            console.log(results);
+        success : function (results) {
+            alert("Your video is now being processed! This could take a while.");
         }
     });
 }
 
+function loadVideo() {
+    let input = document.getElementById("input-video");
+    let link = input.value;
+    if (link.slice(0, 32) !== "https://www.youtube.com/watch?v=") {
+        alert("Please input a valid Youtube URL!")
+    }
+    else {
+        let linkID = link.slice(32);
+        currentVideo = linkID;
+    }
+}
+
 window.onclick = function(event) {
     if (!event.target.matches('.drop-down')) {
-        var dropdowns = document.getElementsByClassName("drop-down-contents");
-        var i;
+        let dropdowns = document.getElementsByClassName("drop-down-contents");
+        let i;
         for (i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
+            let openDropdown = dropdowns[i];
             if (openDropdown.classList.contains('show')) {
                 openDropdown.classList.remove('show');
             }

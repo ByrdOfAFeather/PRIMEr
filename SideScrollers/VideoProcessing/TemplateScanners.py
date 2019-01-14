@@ -372,7 +372,7 @@ class _VideoThreader(Thread, TemplateScanner):
 				slider.append(1 if export[0] else 0)
 				average = sum(slider) / len(slider)
 
-				# If the average value is greater than the threshold it's pretty likely there is a jump happening
+				# If the average value is greater than the threshold the template should be there
 				if average >= .5:
 					print(f"EXPORTING : {datetime.timedelta(seconds=video.get(cv2.CAP_PROP_POS_MSEC) / 1000)}")
 					timestamps.append(datetime.timedelta(seconds=video.get(cv2.CAP_PROP_POS_MSEC) / 1000))

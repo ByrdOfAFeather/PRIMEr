@@ -22,6 +22,14 @@
     background-color: #6ba0c7;
 }
 
+#input-video-button {
+    background-color: #6094ba;
+}
+
+#input-video-button:hover {
+    background-color: #6ba0c7;
+}
+
 .tar-heel-button {
     background-color: #7BAFD4;
     color: white;
@@ -75,7 +83,9 @@
     width: 16px;
     display: inline-block;
     padding-left: 5px;
+}
 
-
+#current-video {
+    display: inline-block;
 }
 
