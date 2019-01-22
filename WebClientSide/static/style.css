@@ -89,3 +89,11 @@
     display: inline-block;
 }
 
+#the-template-buttons {
+    display: inline-block;
+}
+
+#show-templates {
+    top: 0;
+}
+

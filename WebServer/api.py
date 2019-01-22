@@ -3,13 +3,16 @@ from flask_restful import Resource, Api
 from database import DATABASE_PATH
 from SideScrollers.VideoProcessing.TemplateScanners import ThreadedVideoScan
 from SideScrollers.VideoProcessing.Template import Template
-from SideScrollers.VideoProcessing.VideoEditors import VideoEditor
+from SideScrollers.VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
+from SideScrollers.VideoProcessing.Timestamp import Timestamp
 from threading import Thread
 import os
 import sqlite3 as sql
 import json
 import urllib
 import base64
+import shutil
+import datetime
 
 
 # Set up the server and api
@@ -34,8 +37,56 @@ def parse_list(parsable):
 	return parsable
 
 
+def string_to_timedelta(org_string):
+	try:
+		return_value = datetime.datetime.strptime(org_string, "%H:%M:%S.%f")
+	except ValueError:
+		return_value = datetime.datetime.strptime(org_string, "%H:%M:%S")
+	return_value = datetime.timedelta(hours=return_value.hour,
+	                               minutes=return_value.minute,
+	                               seconds=return_value.second,
+	                               microseconds=return_value.microsecond)
+	return return_value
+
+
+def edit_video(timestamps, yt_id, video_editor_class, specials=None):
+	if video_editor_class == ConditionalEditor:
+		tester = video_editor_class(timestamps, yt_id, specials)
+	else:
+		tester = video_editor_class(timestamps, yt_id)
+
+	editor_result = tester.edit()
+	output_json = str(editor_result).replace("'", '"')
+
+	print(f"FINAL OUTPUT JSON: {output_json}")
+
+	data = urllib.parse.urlencode([('gp', output_json)])
+	with urllib.request.urlopen("https://tarheelgameplay.org/play", data=data.encode('utf-8')) as fp:
+		result = fp.read()
+	# result = "NOT CURRENTLY ADDING THIS VIDEO TO TARHEELHAMEPLAY"
+	return result
+
+
 # Function that is responsible for tying templates to a video and then sending them off to edit
-def edit_video(yt_id):
+def scan_video(yt_id, video_editor_class, specials=None):
+	save_direct = f"TemplateFiles/{yt_id}/"
+
+	# Development Tools
+	if os.environ.get('DEV', '') and os.path.exists(f"{save_direct}/scanneroutput.txt"):
+		with open(f"{save_direct}/scanneroutput.txt", "r") as f:
+			saved_list = f.readline().replace("'", "").replace(" ", "").strip('[').strip(']').split(',')
+
+		index = 0
+		tupled_list = []
+		while index < len(saved_list):
+			current_item = saved_list[index].replace("'", "").replace("(", "").replace(")", "")
+			next_item = saved_list[index + 1].replace("'", "").replace("(", "").replace(")", "")
+			tupled_list.append((current_item, next_item))
+			index += 2
+
+		final_output = [Timestamp(times[0], string_to_timedelta(times[1])) for times in tupled_list]
+		return edit_video(final_output, yt_id, video_editor_class, specials)
+
 	db = sql.connect(DATABASE_PATH)
 	cursor = db.cursor()
 
@@ -80,59 +131,18 @@ def edit_video(yt_id):
 	for scans in scanners: final_output.extend(scans.output)
 	final_output.sort(key=lambda x: x.time)
 
-	tester = VideoEditor(video, final_output, yt_id)
-	editor_result = tester.edit()
-	output_json = str(editor_result).replace("'", '"')
-	data = urllib.parse.urlencode([('gp', output_json)])
-	with urllib.request.urlopen("https://tarheelgameplay.org/play", data=data.encode('utf-8')) as fp:
-		result = fp.read()
-	return result
+	# Development Tools
+	if os.environ.get('DEV', ''):
+		save_list = [(timestamps.marker, str(timestamps.time)) for timestamps in final_output]
+		with open(f"{save_direct}/scanneroutput.txt", "w") as f:
+			f.write(str(save_list))
+
+	return edit_video(final_output, yt_id, video_editor_class)
 
 
 class StartEditEndPoint(Resource):
 	def __init__(self):
 		Resource.__init__(self)
-
-	def edit(self):
-		db = sql.connect(DATABASE_PATH)
-		cursor = db.cursor()
-		cursor.execute("""SELECT MAX(VIDEOID) from VIDEOPATHS""")
-		current_video = cursor.fetchall()[0][0]
-		cursor.execute("""SELECT VIDEOPATH from VIDEOPATHS where VIDEOID = (?)""", (current_video,))
-		video = cursor.fetchall()[0][0]
-
-		cursor.execute("""SELECT * from TEMPLATEPATHS WHERE VIDEOID = (?)""", (current_video,))
-		templates = cursor.fetchall()
-		print(templates)
-
-		scanners = []
-		modeled_templates = []
-		print(f"THIS IS TEMPLATES {templates}")
-
-		for template in templates:
-			current_template_id = template[1]
-
-			current_template = Template(current_template_id, DATABASE_PATH)
-			modeled_templates.append(current_template)
-
-			scanner = ThreadedVideoScan([current_template], video)
-			scanners.append(scanner)
-
-			scanner.start()
-
-		[i.join() for i in scanners]
-
-		final_output = []
-		for scans in scanners: final_output.extend(scans.output)
-		final_output.sort(key=lambda x: x.time)
-
-		tester = VideoEditor(video, final_output, yt_id)
-		editor_result = tester.edit()
-		output_json = str(editor_result).replace("'", '"')
-		data = urllib.parse.urlencode([('gp', output_json)])
-		with urllib.request.urlopen("https://tarheelgameplay.org/play", data=data.encode('utf-8')) as fp:
-			result = fp.read()
-		return result
 
 	@staticmethod
 	def add_video(video_id):
@@ -160,7 +170,12 @@ class StartEditEndPoint(Resource):
 			safe_name = template_type.replace(" ", "").replace("<", "").replace(">", "").replace("\"", "")\
 				.replace("/", "").replace("\\", "").replace("|", "").replace("?", "").replace("*", "")
 			template_storage_path = f"TemplateFiles/{video_id}/{safe_name}"
+
+			if os.path.exists(template_storage_path):
+				shutil.rmtree(template_storage_path, ignore_errors=True)
+
 			os.makedirs(template_storage_path)
+
 			for index, template_code in enumerate(video_list[template_type]):
 				indiv_template_path = template_storage_path + f"/{index}.png"
 				self.add_templates(indiv_template_path, safe_name)
@@ -170,6 +185,10 @@ class StartEditEndPoint(Resource):
 	def put(self):
 		raw_data = request.form["data"]
 		dict_data = json.loads(raw_data.replace(r'\x3E', '\x3E'))
+		video_editor = VanillaEditor
+		if dict_data["conditionals"]:
+			print("PUNISHMENT MODULE COMPONENTS DETECTED: EDITING WITH CONDITIONAL VIDEO EDITOR")
+			video_editor = ConditionalEditor
 		self.add_video(dict_data["videoID"])
 		self.export_videos(dict_data["videoID"], dict_data["templates"])
 
@@ -178,7 +197,7 @@ class StartEditEndPoint(Resource):
 				Thread.__init__(self)
 
 			def run(self):
-				print(edit_video(dict_data["videoID"]))
+				print(scan_video(dict_data["videoID"], video_editor, dict_data["conditionals"]))
 
 		editor = EditThread()
 		editor.start()

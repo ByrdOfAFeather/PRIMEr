@@ -1,6 +1,8 @@
 let currentTemplateType = null;
 let currentVideo = null;
 let actionTemplateDict = {};
+let conditionals = {};
+let currentTime = null;
 
 // CREDIT (Inspired from)
 // Kaiido
@@ -60,11 +62,24 @@ function exportTemplate() {
         allowTaint: true
     }).then(
         function (canvas) {
-            let currentTypeSelected = document.getElementById("template-drop-down-button").innerText;
-            let image = canvas.toDataURL();
-            let modImage = image.slice(22);
-            actionTemplateDict[currentTypeSelected].push(modImage);
-            document.body.appendChild(canvas);
+            if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
+
+            if (document.getElementById(currentTemplateType.toLowerCase())) {
+                conditionals[currentTemplateType] = [];
+                conditionals[currentTemplateType].push(currentTime);
+            }
+
+            else {
+                let image = canvas.toDataURL();
+                let modImage = image.slice(22);
+                try {
+                    actionTemplateDict[currentTemplateType].push(modImage);
+                }
+                catch (TypeError) {
+                    actionTemplateDict[currentTemplateType] = [];
+                    actionTemplateDict[currentTemplateType].push(modImage);
+                }
+            }
         }
     )
 }
@@ -94,6 +109,7 @@ function grabScreen() {
     ctx.clearRect(0, 0, videoWidth, videoHeight);
     // END CREDIT
 
+    console.log(document.readyState === "complete");
     screenshot(document.body, {
         x: videoX,
         y: videoY,
@@ -102,6 +118,7 @@ function grabScreen() {
         useCORS: true
     }, true).then(
         function (canvas) {
+            currentTime = document.getElementById("current-video").currentTime;
             let currentScreenCap = document.getElementById("output-screengrab");
             if (currentScreenCap) {
                 currentScreenCap.parentNode.removeChild(currentScreenCap);
@@ -115,19 +132,33 @@ function grabScreen() {
 
 function setCurrentTemplateType(clickEvent) {
     let selector = document.getElementById("template-drop-down-button");
-    if (clickEvent.target.tagName === "IMG") {
+    if (typeof clickEvent === typeof "") {
+        currentTemplateType = clickEvent;
+        selector.innerText = clickEvent;
+    }
+
+    else if (clickEvent.target.tagName === "IMG") {
         currentTemplateType = "";
         selector.innerText = "Select Action Type";
         return;
     }
-    currentTemplateType = clickEvent.target.text;
-    selector.innerText = currentTemplateType;
+
+    else {
+        currentTemplateType = clickEvent.target.text;
+        selector.innerText = currentTemplateType;
+    }
 }
 
 function deleteTemplate(event) {
     let currentActionTypeToDeleteNode = event.target.parentNode;
-    document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDeleteNode);
-    delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
+    if (currentActionTypeToDeleteNode === document.getElementById("punishment-node")) {
+        delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
+        actionTemplateDict[currentActionTypeToDeleteNode] = [];
+    }
+    else {
+        document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDeleteNode);
+        delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
+    }
 }
 
 function addNewTemplate() {
@@ -138,6 +169,7 @@ function addNewTemplate() {
     addedTemplateType.href = "#";
     addedTemplateType.onclick = function (event) {setCurrentTemplateType(event);};
     addedTemplateType.textContent = newTemplateType;
+    setCurrentTemplateType(newTemplateType);
 
     let templateImage = document.createElement("img");
     templateImage.className = "delete-button";
@@ -145,18 +177,25 @@ function addNewTemplate() {
     templateImage.alt = "delete";
     templateImage.onclick = function(event) { event.preventDefault(); deleteTemplate(event); };
     addedTemplateType.appendChild(templateImage);
-    document.getElementById("template-drop-down-contents").appendChild(addedTemplateType);
-
-    actionTemplateDict[newTemplateType] = [];
+    document.getElementById("template-drop-down-contents").prepend(addedTemplateType);
 }
 
-function showDropDown() {
-    document.getElementById("template-drop-down-contents").classList.toggle("show");
+function showDropDown(passedButton) {
+    console.log(passedButton.value);
+    if (passedButton === document.getElementById("template-drop-down-button")) {
+        document.getElementById("template-drop-down-contents").classList.toggle("show");
+    }
+
+    else if (passedButton === document.getElementById("show-templates")) {
+        document.getElementById("templates-drop-down-contents").classList.toggle("show");
+    }
 }
 
 function finish() {
     let data = {};
     data["templates"] = actionTemplateDict;
+    data["conditionals"] = conditionals;
+    console.log(data);
     data["videoID"] = currentVideo;
     let json = JSON.stringify(data);
     console.log(json);
@@ -172,6 +211,7 @@ function finish() {
         }
     });
 }
+
 
 function loadVideo() {
     let input = document.getElementById("input-video");
