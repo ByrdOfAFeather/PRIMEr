@@ -14,6 +14,8 @@ Tar Heel Gameplay: http://tarheelgameplay.org
 
 ![Example of MegaMan gameplay](https://media.giphy.com/media/g0mKmZLhRKwD5jvpUi/giphy.gif)
 
+Early version of punishment module [here](https://tarheelgameplay.org/play/?key=florida-spark-calypso)
+
 <h1 align="center"> Built With </h1>
 
 openCV: https://github.com/opencv/opencv

@@ -11,7 +11,6 @@ class _VideoEditor:
 	"""
 	def __init__(self, timestamps, video_id):
 		"""Initialization of the class
-		:type video: int
 		:type timestamps: list[Timestamp]
 		:type video_id: str
 		"""
@@ -19,6 +18,7 @@ class _VideoEditor:
 		self.NO_APPLICABLE_CHOICES = -2
 		self.timestamps = timestamps
 		self.video_id = video_id
+		self.index = 0
 
 	def get_nearest_descriptors(self, start_index, max_time_from_current):
 		"""IMPLEMENTATION LEFT TO SUBCLASSES"""
@@ -50,18 +50,18 @@ class _VideoEditor:
 		print("=== END EDITING INFORMATION ===")
 
 		timepoints = []
-		index_of_timestamps = 0
-		while index_of_timestamps < len(self.timestamps) - 1:
-			current_class = self.timestamps[index_of_timestamps].marker
+		self.index = 0
+		while self.index < len(self.timestamps) - 1:
+			current_class = self.timestamps[self.index].marker
 
-			nearest_times = self.get_nearest_descriptors(index_of_timestamps, datetime.timedelta(seconds=4))
+			nearest_times = self.get_nearest_descriptors(self.index, datetime.timedelta(seconds=4))
 			if nearest_times == self.FINAL_ITEM_IN_LIST: break
 			if nearest_times == self.NO_APPLICABLE_CHOICES:
-				index_of_timestamps += 1
+				self.index += 1
 				continue
 
-			[timepoints.append(i) for i in self.build_choices_json(current_class, index_of_timestamps, nearest_times)]
-			index_of_timestamps += len(nearest_times) + 1
+			[timepoints.append(i) for i in self.build_choices_json(current_class, self.index, nearest_times)]
+			self.index += len(nearest_times) + 1
 
 		game_information["timePoints"] = timepoints
 		game_information["hits"] = len(timepoints)
@@ -84,6 +84,7 @@ class VanillaEditor(_VideoEditor):
 			return self.FINAL_ITEM_IN_LIST
 
 		if self.timestamps[start_index].marker == self.timestamps[start_index + 1].marker:
+			self.index += 1
 			return self.get_nearest_descriptors(start_index + 1, max_time_from_current)
 
 		sub_timestamps = self.timestamps[start_index:]
@@ -104,7 +105,7 @@ class VanillaEditor(_VideoEditor):
 		if not return_list: return self.NO_APPLICABLE_CHOICES
 		print("this is start index", start_index)
 		print("this is end index", end_index)
-		print(f"this is return list {return_list}")
+		print(f"this is return list {[i.marker for i in return_list]}")
 		return return_list
 
 	def build_choices_json(self, current_class, index_of_timestamps, nearest_times):
@@ -117,8 +118,10 @@ class VanillaEditor(_VideoEditor):
 		]
 
 		descriptor_tracker = []
-		for nearby_time in nearest_times:
+		for nearby_time in nearest_times[1:]:
+			print(f"THIS IS THE CURRENT DESCRIPTOR TRACKER {descriptor_tracker}")
 			if nearby_time.marker not in descriptor_tracker:
+				print(f"THIS IS THE CURRENT MARKER {nearby_time.marker}")
 				choices.append(
 					{
 						"prompt": nearby_time.marker,
@@ -127,6 +130,7 @@ class VanillaEditor(_VideoEditor):
 				)
 			descriptor_tracker.append(nearby_time.marker)
 
+		print(f"THIS IS CHOICES {choices}")
 		return [
 			{
 				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
@@ -152,6 +156,7 @@ class ConditionalEditor(VanillaEditor):
 			return self.FINAL_ITEM_IN_LIST
 
 		if self.timestamps[start_index].marker == self.timestamps[start_index + 1].marker:
+			self.index += 1
 			return self.get_nearest_descriptors(start_index + 1, max_time_from_current)
 
 		sub_timestamps = self.timestamps[start_index:]
