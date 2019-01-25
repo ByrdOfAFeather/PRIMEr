@@ -14,7 +14,9 @@ Tar Heel Gameplay: http://tarheelgameplay.org
 
 ![Example of MegaMan gameplay](https://media.giphy.com/media/g0mKmZLhRKwD5jvpUi/giphy.gif)
 
-Early version of punishment module [here](https://tarheelgameplay.org/play/?key=florida-spark-calypso)
+Early version of punishment module: <br>
+ [here](https://tarheelgameplay.org/play/?key=florida-spark-calypso) <br>
+ [and here](https://tarheelgameplay.org/play/?key=period-norway-mailbox)
 
 <h1 align="center"> Built With </h1>
 

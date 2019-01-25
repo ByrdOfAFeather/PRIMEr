@@ -137,7 +137,7 @@ def scan_video(yt_id, video_editor_class, specials=None):
 		with open(f"{save_direct}/scanneroutput.txt", "w") as f:
 			f.write(str(save_list))
 
-	return edit_video(final_output, yt_id, video_editor_class)
+	return edit_video(final_output, yt_id, video_editor_class, specials)
 
 
 class StartEditEndPoint(Resource):
@@ -187,6 +187,7 @@ class StartEditEndPoint(Resource):
 		dict_data = json.loads(raw_data.replace(r'\x3E', '\x3E'))
 		video_editor = VanillaEditor
 		if dict_data["conditionals"]:
+			print(dict_data["conditionals"])
 			print("PUNISHMENT MODULE COMPONENTS DETECTED: EDITING WITH CONDITIONAL VIDEO EDITOR")
 			video_editor = ConditionalEditor
 		self.add_video(dict_data["videoID"])
