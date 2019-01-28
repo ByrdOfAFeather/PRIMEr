@@ -198,7 +198,11 @@ class StartEditEndPoint(Resource):
 				Thread.__init__(self)
 
 			def run(self):
-				print(scan_video(dict_data["videoID"], video_editor, dict_data["conditionals"]))
+				value = scan_video(dict_data["videoID"], video_editor, dict_data["conditionals"])
+				value = value.decode()[8:].replace("\"", "").replace("{", "").replace("}", "")
+				print(
+					f'https://tarheelgameplay.org/play/?key={value}'
+				)
 
 		editor = EditThread()
 		editor.start()

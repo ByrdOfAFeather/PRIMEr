@@ -114,7 +114,7 @@ class VanillaEditor(_VideoEditor):
 			{
 				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 				"prompt": current_class,
-				"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2)
+				"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1)
 			}
 		]
 
@@ -126,7 +126,7 @@ class VanillaEditor(_VideoEditor):
 				choices.append(
 					{
 						"prompt": nearby_time.marker,
-						"next": round(nearby_time.time.total_seconds(), 2)
+						"next": round(nearby_time.time.total_seconds(), 1)
 					}
 				)
 			descriptor_tracker.append(nearby_time.marker)
@@ -134,13 +134,13 @@ class VanillaEditor(_VideoEditor):
 		print(f"THIS IS CHOICES {choices}")
 		return [
 			{
-				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
+				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1),
 				"choices": choices
 			}
 		]
 
 
-class ConditionalEditor(VanillaEditor):
+class ConditionalEditor(_VideoEditor):
 	"""BASE COMPARISION: https://tarheelgameplay.org/play/?key=table-aroma-nikita
 	"""
 	def __init__(self, timestamps, video_id, specials):
@@ -198,34 +198,36 @@ class ConditionalEditor(VanillaEditor):
 			{
 				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 				"prompt": nearest_times[0].marker,
-				"next": round(nearest_times[0].time.total_seconds(), 2)
+				"next": round(nearest_times[0].time.total_seconds() + .1, 2)
 			}
 		]
 
+		self.punishment_offset += .2
+
 		descriptor_tracker = []
+		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
 		for nearby_time in nearest_times[1:]:
 			if nearby_time.marker not in descriptor_tracker:
 				choices.append(
 					{
 						"prompt": nearby_time.marker,
-						"next": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .01, 2)
+						"next": incorrect_time
 					}
 				)
 
 			descriptor_tracker.append(nearby_time.marker)
-			self.punishment_offset += .03
 
 		return [
 			{
-				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
+				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1),
 				"choices": choices
 			},
 			{
-				"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 2),
+				"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 1),
 				"choices": [
 					{
 						"prompt": "Continue",
-						"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2)
+						"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 1)
 					}
 				]
 			}
@@ -234,13 +236,13 @@ class ConditionalEditor(VanillaEditor):
 	def edit(self):
 		edits = super(ConditionalEditor, self).edit()
 		edits["timePoints"].append({
-				"time": round(self.specials["Punishment"], 2),
+				"time": round(self.specials["Punishment"] - self.punishment_offset + self.punishment_length - .2, 1),
 				"choices": [
 					{
-						"prompt": "Continue",
+						"prompt": "Continue ACTUAL",
 						"next": round(
-							self.specials["Punishment"] - self.punishment_offset,
-							2
+							self.specials["Punishment"] + 2,
+							1
 						)
 					}
 				]
