@@ -22,18 +22,31 @@ class _VideoEditor:
 		self.timepoints = []
 
 	def get_nearest_descriptors(self, start_index, max_time_from_current):
-		"""IMPLEMENTATION LEFT TO SUBCLASSES"""
+		"""IMPLEMENTATION LEFT TO SUBCLASSES
+		:type start_index: int
+		:type max_time_from_current: datetime.timedelta
+		:return: list containing timestamps of nearest actions
+		"""
 		pass
 
 	def build_choices_json(self, current_class, index_of_timestamps, nearest_times):
-		"""IMPLEMENTATION LEFT TO SUBCLASSES"""
+		"""IMPLEMENTATION LEFT TO
+		:type current_class: str
+		:type index_of_timestamps: int
+		:type nearest_times: list
+		:return: dictionary containing choices based on the current class and it's nearest actions
+		"""
 
 	def edit(self):
+		"""Builds a JSON list of edits that can be interpreted by https://tarheelgameplay.org
+		:return: JSON formatted dictionary representing edits
+		"""
 		all_markers = []
 		for timestamp in self.timestamps:
 			if timestamp.marker not in all_markers:
 				all_markers.append(timestamp.marker)
 
+		# Context information (top of the JSON)
 		game_information = {
 			"videoId": f"{self.video_id}",
 			"start": 0,
@@ -70,20 +83,16 @@ class _VideoEditor:
 
 
 class VanillaEditor(_VideoEditor):
-	"""A class representing a video editor
-	Attributes:
-		FINAL_ITEM_IN_LIST      A constant representing one of two cases in which editing needs to be broken [out of items]
-		NO_APPLICABLE_CHOICES   A constant representing the case in which there are no nearby templates found
-		video                   The path to the video for which this is responsible for editing
-		timestamps              A list of timestamps with their markers, which is what the edit is based on
-	"""
 	def __init__(self, timestamps, video_id):
 		_VideoEditor.__init__(self, timestamps, video_id)
 
 	def get_nearest_descriptors(self, start_index, max_time_from_current):
+
+		# If the index is right at the end of the list, there aren't anymore actions after it
 		if start_index + 1 >= len(self.timestamps) - 1:
 			return self.FINAL_ITEM_IN_LIST
 
+		# If the next action is the current action, move to the next action
 		if self.timestamps[start_index].marker == self.timestamps[start_index + 1].marker:
 			self.index += 1
 			return self.get_nearest_descriptors(start_index + 1, max_time_from_current)
@@ -91,12 +100,13 @@ class VanillaEditor(_VideoEditor):
 		sub_timestamps = self.timestamps[start_index:]
 		delete_list = []
 		end_index = 0
-
 		for index, timestamps in enumerate(sub_timestamps):
+			# Remove any items that are the same action as the starting action, as long as they have a different time
 			if timestamps.marker == self.timestamps[start_index].marker \
 					and timestamps is not self.timestamps[start_index]:
 				delete_list.append(timestamps)
 
+			# Sets the end index after the time is reached
 			if timestamps.time - self.timestamps[start_index].time >= max_time_from_current:
 				end_index = index + start_index
 				break
@@ -104,12 +114,10 @@ class VanillaEditor(_VideoEditor):
 		return_list = self.timestamps[start_index:end_index]
 		return_list = [item for item in return_list if item not in delete_list]
 		if not return_list: return self.NO_APPLICABLE_CHOICES
-		print("this is start index", start_index)
-		print("this is end index", end_index)
-		print(f"this is return list {[i.marker for i in return_list]}")
 		return return_list
 
 	def build_choices_json(self, current_class, index_of_timestamps, nearest_times):
+		# Set basic choice to keep doing what is already being done
 		choices = [
 			{
 				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
@@ -118,11 +126,10 @@ class VanillaEditor(_VideoEditor):
 			}
 		]
 
+		# Builds a choice for every unique action in the nearest times
 		descriptor_tracker = []
 		for nearby_time in nearest_times[1:]:
-			print(f"THIS IS THE CURRENT DESCRIPTOR TRACKER {descriptor_tracker}")
 			if nearby_time.marker not in descriptor_tracker:
-				print(f"THIS IS THE CURRENT MARKER {nearby_time.marker}")
 				choices.append(
 					{
 						"prompt": nearby_time.marker,
@@ -131,7 +138,6 @@ class VanillaEditor(_VideoEditor):
 				)
 			descriptor_tracker.append(nearby_time.marker)
 
-		print(f"THIS IS CHOICES {choices}")
 		return [
 			{
 				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1),
@@ -141,7 +147,13 @@ class VanillaEditor(_VideoEditor):
 
 
 class ConditionalEditor(_VideoEditor):
-	"""BASE COMPARISION: https://tarheelgameplay.org/play/?key=table-aroma-nikita
+	"""An editor based on the idea of conditional choices
+	Attributes:
+		FINAL_ITEM_IN_LIST      A constant representing one of two cases in which editing needs to be broken [out of items]
+		NO_APPLICABLE_CHOICES   A constant representing the case in which there are no nearby templates found
+		video_id                The youtube ID of the video currently being edited
+		timestamps              A list of timestamps with their markers, which is what the edit is based on
+		specials                A dictionary describing special types of timestamps
 	"""
 	def __init__(self, timestamps, video_id, specials):
 		_VideoEditor.__init__(self, timestamps, video_id,)
@@ -151,7 +163,6 @@ class ConditionalEditor(_VideoEditor):
 		self.punishment_length = 1
 
 	def get_nearest_descriptors(self, start_index, max_time_from_current):
-		print("this is start index", start_index)
 		if start_index + 1 >= len(self.timestamps) - 1:
 			return self.FINAL_ITEM_IN_LIST
 
@@ -171,15 +182,8 @@ class ConditionalEditor(_VideoEditor):
 				end_index = index + start_index
 				break
 
-			specials_at_index = (
-					abs(timestamps.time.total_seconds() - self.specials["Punishment"]) <= 4 or
-					abs(timestamps.time.total_seconds() - self.specials["Victory"]) <= 4 or
-					abs(timestamps.time.total_seconds() - self.specials["Failure"]) <= 4
-			)
-			print(abs(timestamps.time.total_seconds() - self.specials["Punishment"]))
-			print(abs(timestamps.time.total_seconds() - self.specials["Victory"]))
-			print(abs(timestamps.time.total_seconds() - self.specials["Failure"]))
-			print(specials_at_index)
+			# If the time stamps are nearing the specials, return what is already provided
+			specials_at_index = abs(timestamps.time.total_seconds() - self.specials["Punishment"]) <= 4
 			if specials_at_index:
 				end_index = index + start_index
 				break
@@ -187,7 +191,6 @@ class ConditionalEditor(_VideoEditor):
 		return_list = self.timestamps[start_index:end_index]
 		return_list = [item for item in return_list if item not in delete_list]
 		if not return_list: return self.NO_APPLICABLE_CHOICES
-		print("this is end index", end_index)
 		print(f"this is return list {[i.marker for i in return_list]}")
 		return return_list
 
@@ -200,6 +203,8 @@ class ConditionalEditor(_VideoEditor):
 			}
 		]
 
+		# this is used to make multiple "Continue" choices near the punishment timestamp so that they can point to
+		# different points in the video. (This is needed so the video can go right back to where a mistake was made)
 		self.punishment_offset += .2
 
 		descriptor_tracker = []
@@ -233,6 +238,8 @@ class ConditionalEditor(_VideoEditor):
 
 	def edit(self):
 		edits = super(ConditionalEditor, self).edit()
+
+		# This time point is so that the player can skip over the punishment "Continues" while playing through the video
 		edits["timePoints"].append({
 				"time": round(self.specials["Punishment"] - self.punishment_offset + self.punishment_length - .2, 1),
 				"choices": [
