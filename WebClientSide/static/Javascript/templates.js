@@ -33,10 +33,12 @@ function exportTemplate() {
     let rectangleY = parseInt(rectangle.style.top, 10);
     let rectangleHeight = parseInt(rectangle.style.height, 10);
     let rectangleWidth = parseInt(rectangle.style.width, 10);
+    rectangle.style.border = "none";
 
     let canvas = document.getElementById("test-canvas");
     let ctx = canvas.getContext("2d");
     let v = document.getElementById("output-screengrab");
+
 
     // CREDIT
     // Brain Mayo
