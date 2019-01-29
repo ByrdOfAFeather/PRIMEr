@@ -3,6 +3,7 @@ let currentVideo = null;
 let actionTemplateDict = {};
 let conditionals = {};
 let currentTime = null;
+let templatesShowing = false;
 
 // CREDIT (Inspired from)
 // Kaiido
@@ -79,6 +80,15 @@ function exportTemplate() {
                     actionTemplateDict[currentTemplateType] = [];
                     actionTemplateDict[currentTemplateType].push(modImage);
                 }
+                finally {
+                    let templateDiv = document.getElementById(currentTemplateType + "-div");
+                    if (!templateDiv) {
+                        templateDiv = document.createElement("div");
+                        templateDiv.id = currentTemplateType + "-div";
+                        document.getElementById("added-templates").appendChild(templateDiv);
+                    }
+                    templateDiv.appendChild(canvas);
+                }
             }
         }
     )
@@ -151,7 +161,7 @@ function setCurrentTemplateType(clickEvent) {
 
 function deleteTemplate(event) {
     let currentActionTypeToDeleteNode = event.target.parentNode;
-    if (currentActionTypeToDeleteNode.style.class === "conditional-action-type") {
+    if (currentActionTypeToDeleteNode.classList[0] === "conditional-action-type") {
         delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
         actionTemplateDict[currentActionTypeToDeleteNode] = [];
     }
@@ -180,6 +190,12 @@ function addNewTemplate() {
     document.getElementById("template-drop-down-contents").prepend(addedTemplateType);
 }
 
+function showTemplates() {
+    let templateDiv = document.getElementById("added-templates");
+    templateDiv.style.display = templatesShowing ? "none" : "block";
+    templatesShowing = !templatesShowing;
+}
+
 function showDropDown(passedButton) {
     console.log(passedButton.value);
     if (passedButton === document.getElementById("template-drop-down-button")) {
@@ -190,28 +206,6 @@ function showDropDown(passedButton) {
         document.getElementById("templates-drop-down-contents").classList.toggle("show");
     }
 }
-
-function finish() {
-    let data = {};
-    data["templates"] = actionTemplateDict;
-    data["conditionals"] = conditionals;
-    console.log(data);
-    data["videoID"] = currentVideo;
-    let json = JSON.stringify(data);
-    console.log(json);
-    $.ajax({
-        url: 'http://127.0.0.1:5001/api/startedit/',
-        method: 'PUT',
-        dataType: 'json',
-        data: {
-            data: json
-        },
-        success : function (results) {
-            alert("Your video is now being processed! This could take a while.");
-        }
-    });
-}
-
 
 function loadVideo() {
     let input = document.getElementById("input-video");
@@ -244,3 +238,23 @@ window.onkeypress = function(event) {
     }
 };
 
+function finish() {
+    let data = {};
+    data["templates"] = actionTemplateDict;
+    data["conditionals"] = conditionals;
+    console.log(data);
+    data["videoID"] = currentVideo;
+    let json = JSON.stringify(data);
+    console.log(json);
+    $.ajax({
+        url: 'http://127.0.0.1:5001/api/startedit/',
+        method: 'PUT',
+        dataType: 'json',
+        data: {
+            data: json
+        },
+        success : function (results) {
+            alert("Your video is now being processed! This could take a while.");
+        }
+    });
+}

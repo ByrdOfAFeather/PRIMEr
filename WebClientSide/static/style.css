@@ -97,5 +97,13 @@
     top: 0;
 }
 
+#drop-down {
+    display: inline-block;
+}
+
+#show-templates-contents {
+    display: inline-block;
+}
+
 
 
