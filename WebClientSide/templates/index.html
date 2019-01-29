@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<label for="input-video" class="tar-heel-label">Youtube Video Link:
+<label id="input-video-label" for="input-video" class="tar-heel-label">Youtube Video Link:
     <input id="input-video" type="text">
     <button id="input-video-button" class="tar-heel-button" onclick="loadVideo();">Load</button>
 </label>
@@ -15,7 +15,7 @@
 <!--- Loads the video --->
 <div id="video-container">
     <video id="current-video" controls="controls">
-        <source src="../static/Resources/smallcustmm.mp4">
+        <source src="../static/Resources/ori.mp4">
     </video>
 
     <canvas id="test-canvas"></canvas>

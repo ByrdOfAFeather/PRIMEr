@@ -99,10 +99,10 @@ function exportTemplate() {
 function grabScreen() {
     let video = document.getElementById('current-video');
 
-    let videoX = parseInt(video.style.left, 10);
-    let videoY = parseInt(video.style.top, 10);
-    let videoHeight = parseInt(video.videoHeight, 10);
-    let videoWidth = parseInt(video.videoWidth, 10);
+    let videoX = video.offsetLeft;
+    let videoY = video.offsetTop;
+    let videoHeight = video.videoHeight
+    let videoWidth = video.videoWidth;
 
     let canvas = document.getElementById("test-canvas");
     let ctx = canvas.getContext("2d");
