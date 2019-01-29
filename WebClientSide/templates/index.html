@@ -15,7 +15,7 @@
 <!--- Loads the video --->
 <div id="video-container">
     <video id="current-video" controls="controls">
-        <source src="../static/Resources/tK_7zF1iCFg.mp4">
+        <source src="../static/Resources/smallcustmm.mp4">
     </video>
 
     <canvas id="test-canvas"></canvas>
@@ -31,7 +31,6 @@
         <button id="new-template-button" class="tar-heel-button" onclick="addNewTemplate();">Add</button>
     </label>
 
-
     <button id="template-drop-down-button" class="tar-heel-button drop-down" onclick="showDropDown(this);">
         Select Action Type</button>
 
@@ -39,18 +38,9 @@
         <a href="#" onclick="setCurrentTemplateType(event)" class="conditional-action-type"
            id="punishment">Punishment<img class="delete-button" src="../static/Resources/deletebutton.png" alt="delete"
                                           onclick="event.preventDefault(); deleteTemplate(event);"></a>
-
-        <a href="#" onclick="setCurrentTemplateType(event)" class="conditional-action-type"
-           id="victory">Victory<img class="delete-button" src="../static/Resources/deletebutton.png" alt="delete"
-                                    onclick="event.preventDefault(); deleteTemplate(event);"></a>
-
-        <a href="#" onclick="setCurrentTemplateType(event)" class="conditional-action-type"
-           id="failure">Failure<img class="delete-button" src="../static/Resources/deletebutton.png" alt="delete"
-                                       onclick="event.preventDefault(); deleteTemplate(event);"></a>
-
     </div>
 
-    <div id="the-template-buttons">
+    <div id="template-buttons">
 
         <button id="show-templates" class="tar-heel-button drop-down" onclick="showDropDown(this);">Show Action Examples</button>
         <div id="templates-drop-down-contents" class="drop-down-contents"><p>test</p></div>
@@ -60,8 +50,6 @@
 
     <button id="grab-screen-button" class="tar-heel-button drop-down" onclick="grabScreen();">
         Capture Current Screen</button>
-
-
 
     <button id="finish-button" class="tar-heel-button" onclick="finish();">Finish</button>
 </div>

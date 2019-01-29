@@ -151,7 +151,7 @@ function setCurrentTemplateType(clickEvent) {
 
 function deleteTemplate(event) {
     let currentActionTypeToDeleteNode = event.target.parentNode;
-    if (currentActionTypeToDeleteNode === document.getElementById("punishment-node")) {
+    if (currentActionTypeToDeleteNode.style.class === "conditional-action-type") {
         delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
         actionTemplateDict[currentActionTypeToDeleteNode] = [];
     }

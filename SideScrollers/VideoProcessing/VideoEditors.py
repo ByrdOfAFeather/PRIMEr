@@ -146,8 +146,6 @@ class ConditionalEditor(_VideoEditor):
 	def __init__(self, timestamps, video_id, specials):
 		_VideoEditor.__init__(self, timestamps, video_id,)
 		specials["Punishment"] = datetime.timedelta(seconds=specials["Punishment"][0]).total_seconds()
-		specials["Victory"] = datetime.timedelta(seconds=specials["Victory"][0]).total_seconds()
-		specials["Failure"] = datetime.timedelta(seconds=specials["Failure"][0]).total_seconds()
 		self.specials = specials
 		self.punishment_offset = 0
 		self.punishment_length = 1
@@ -219,15 +217,15 @@ class ConditionalEditor(_VideoEditor):
 
 		return [
 			{
-				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1),
+				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
 				"choices": choices
 			},
 			{
-				"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 1),
+				"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 2),
 				"choices": [
 					{
 						"prompt": "Continue",
-						"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 1)
+						"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2)
 					}
 				]
 			}
@@ -239,7 +237,7 @@ class ConditionalEditor(_VideoEditor):
 				"time": round(self.specials["Punishment"] - self.punishment_offset + self.punishment_length - .2, 1),
 				"choices": [
 					{
-						"prompt": "Continue ACTUAL",
+						"prompt": "Continue",
 						"next": round(
 							self.specials["Punishment"] + 2,
 							1
@@ -249,6 +247,7 @@ class ConditionalEditor(_VideoEditor):
 			}
 		)
 		return edits
+
 
 
 
