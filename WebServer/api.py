@@ -1,10 +1,10 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 from database import DATABASE_PATH
-from SideScrollers.VideoProcessing.TemplateScanners import ThreadedVideoScan
-from SideScrollers.VideoProcessing.Template import Template
-from SideScrollers.VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
-from SideScrollers.VideoProcessing.Timestamp import Timestamp
+from VideoProcessing.TemplateScanners import ThreadedVideoScan
+from VideoProcessing.Template import Template
+from VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
+from VideoProcessing.Timestamp import Timestamp
 from threading import Thread
 import os
 import sqlite3 as sql

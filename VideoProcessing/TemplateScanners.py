@@ -1,4 +1,4 @@
-from SideScrollers.VideoProcessing.Timestamp import Timestamp
+from VideoProcessing.Timestamp import Timestamp
 from threading import Thread
 import matplotlib.pyplot as plt
 import numpy as np
