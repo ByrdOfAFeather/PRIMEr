@@ -230,7 +230,7 @@ class ConditionalEditor(_VideoEditor):
 				"choices": [
 					{
 						"prompt": "Continue",
-						"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2)
+						"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 2)
 					}
 				]
 			}

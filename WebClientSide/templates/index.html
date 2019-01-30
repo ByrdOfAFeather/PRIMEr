@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<label for="input-video" class="tar-heel-label">Youtube Video Link:
+<label id="input-video-label" for="input-video" class="tar-heel-label">Youtube Video Link:
     <input id="input-video" type="text">
     <button id="input-video-button" class="tar-heel-button" onclick="loadVideo();">Load</button>
 </label>
@@ -15,7 +15,7 @@
 <!--- Loads the video --->
 <div id="video-container">
     <video id="current-video" controls="controls">
-        <source src="../static/Resources/smallcustmm.mp4">
+        <source src="../static/Resources/ylbwTpMhZ3k.mp4">
     </video>
 
     <canvas id="test-canvas"></canvas>
@@ -31,21 +31,30 @@
         <button id="new-template-button" class="tar-heel-button" onclick="addNewTemplate();">Add</button>
     </label>
 
-    <button id="template-drop-down-button" class="tar-heel-button drop-down" onclick="showDropDown(this);">
-        Select Action Type</button>
+    <div id="drop-down">
+        <button id="template-drop-down-button" class="tar-heel-button drop-down" onclick="showDropDown(this);">
+            Select Action Type</button>
 
-    <div id="template-drop-down-contents" class="drop-down-contents">
-        <a href="#" onclick="setCurrentTemplateType(event)" class="conditional-action-type"
-           id="punishment">Punishment<img class="delete-button" src="../static/Resources/deletebutton.png" alt="delete"
-                                          onclick="event.preventDefault(); deleteTemplate(event);"></a>
+        <div id="template-drop-down-contents" class="drop-down-contents">
+            <a href="#" onclick="setCurrentTemplateType(event)" class="conditional-action-type"
+               id="punishment">Punishment<img class="delete-button" src="../static/Resources/deletebutton.png" alt="delete"
+                                              onclick="event.preventDefault(); deleteTemplate(event);"></a>
+        </div>
     </div>
 
     <div id="template-buttons">
-
-        <button id="show-templates" class="tar-heel-button drop-down" onclick="showDropDown(this);">Show Action Examples</button>
-        <div id="templates-drop-down-contents" class="drop-down-contents"><p>test</p></div>
-
         <button id="export_button" class="tar-heel-button" onclick="exportTemplate();">Add Action Example</button>
+
+        <div id="show-templates-contents">
+            <button id="show-templates" class="tar-heel-button drop-down" onclick="showTemplates();">Show Action Examples</button>
+             <div class="drop-down-contents" id="added-templates">
+                 <table id="template-table">
+                     <tr id="template-table-headers">
+                         <th>Template Name</th>
+                     </tr>
+                 </table>
+             </div>
+        </div>
     </div>
 
     <button id="grab-screen-button" class="tar-heel-button drop-down" onclick="grabScreen();">
@@ -54,10 +63,12 @@
     <button id="finish-button" class="tar-heel-button" onclick="finish();">Finish</button>
 </div>
 
+
+
 <!--- Scripts for rectangles --->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script src="../static/Javascript/selectors.js"></script>
 <script src="../static/Javascript/templates.js"></script>
-<script src="../static/Javascript/html2canvas.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 </body>
 </html>

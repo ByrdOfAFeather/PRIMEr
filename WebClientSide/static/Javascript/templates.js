@@ -3,6 +3,8 @@ let currentVideo = null;
 let actionTemplateDict = {};
 let conditionals = {};
 let currentTime = null;
+let templatesShowing = false;
+let templateTable = document.getElementById("template-table");
 
 // CREDIT (Inspired from)
 // Kaiido
@@ -32,10 +34,12 @@ function exportTemplate() {
     let rectangleY = parseInt(rectangle.style.top, 10);
     let rectangleHeight = parseInt(rectangle.style.height, 10);
     let rectangleWidth = parseInt(rectangle.style.width, 10);
+    rectangle.style.border = "none";
 
     let canvas = document.getElementById("test-canvas");
     let ctx = canvas.getContext("2d");
     let v = document.getElementById("output-screengrab");
+
 
     // CREDIT
     // Brain Mayo
@@ -79,6 +83,15 @@ function exportTemplate() {
                     actionTemplateDict[currentTemplateType] = [];
                     actionTemplateDict[currentTemplateType].push(modImage);
                 }
+                finally {
+                    let templateTableRow = document.getElementById(currentTemplateType + "-table");
+                    let templatesAlreadyAdded = document.getElementsByClassName(currentTemplateType + "-data").length;
+                    let newTemplate = document.createElement("td");
+                    newTemplate.id = currentTemplateType + "-" + templatesAlreadyAdded;
+                    newTemplate.className = currentTemplateType + "-data";
+                    newTemplate.appendChild(canvas);
+                    templateTableRow.appendChild(newTemplate);
+                }
             }
         }
     )
@@ -87,10 +100,10 @@ function exportTemplate() {
 function grabScreen() {
     let video = document.getElementById('current-video');
 
-    let videoX = parseInt(video.style.left, 10);
-    let videoY = parseInt(video.style.top, 10);
-    let videoHeight = parseInt(video.videoHeight, 10);
-    let videoWidth = parseInt(video.videoWidth, 10);
+    let videoX = video.offsetLeft;
+    let videoY = video.offsetTop;
+    let videoHeight = video.videoHeight
+    let videoWidth = video.videoWidth;
 
     let canvas = document.getElementById("test-canvas");
     let ctx = canvas.getContext("2d");
@@ -151,7 +164,7 @@ function setCurrentTemplateType(clickEvent) {
 
 function deleteTemplate(event) {
     let currentActionTypeToDeleteNode = event.target.parentNode;
-    if (currentActionTypeToDeleteNode.style.class === "conditional-action-type") {
+    if (currentActionTypeToDeleteNode.classList[0] === "conditional-action-type") {
         delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
         actionTemplateDict[currentActionTypeToDeleteNode] = [];
     }
@@ -164,20 +177,48 @@ function deleteTemplate(event) {
 function addNewTemplate() {
     let templateNameInput = document.getElementById("new-template-type");
     let newTemplateType = templateNameInput.value;
-    templateNameInput.value = "";
-    let addedTemplateType = document.createElement("a");
-    addedTemplateType.href = "#";
-    addedTemplateType.onclick = function (event) {setCurrentTemplateType(event);};
-    addedTemplateType.textContent = newTemplateType;
-    setCurrentTemplateType(newTemplateType);
 
-    let templateImage = document.createElement("img");
-    templateImage.className = "delete-button";
-    templateImage.src = "../static/Resources/deletebutton.png";
-    templateImage.alt = "delete";
-    templateImage.onclick = function(event) { event.preventDefault(); deleteTemplate(event); };
-    addedTemplateType.appendChild(templateImage);
-    document.getElementById("template-drop-down-contents").prepend(addedTemplateType);
+    if (document.getElementById(newTemplateType.toLowerCase())) {
+        alert("You can't add a template with the same name twice!");
+    }
+
+    else {
+        templateNameInput.value = "";
+        let addedTemplateType = document.createElement("a");
+        addedTemplateType.href = "#";
+        addedTemplateType.onclick = function (event) {
+            setCurrentTemplateType(event);
+        };
+        addedTemplateType.id = newTemplateType.toLowerCase();
+        addedTemplateType.textContent = newTemplateType;
+        setCurrentTemplateType(newTemplateType);
+
+        let templateImage = document.createElement("img");
+        templateImage.className = "delete-button";
+        templateImage.src = "../static/Resources/deletebutton.png";
+        templateImage.alt = "delete";
+        templateImage.onclick = function (event) {
+            event.preventDefault();
+            deleteTemplate(event);
+        };
+        addedTemplateType.appendChild(templateImage);
+        document.getElementById("template-drop-down-contents").prepend(addedTemplateType);
+
+        // Add to the table data
+        let newRow = document.createElement("tr");
+        let baseData = document.createElement("td");
+        let baseDataText = document.createTextNode(newTemplateType);
+        baseData.appendChild(baseDataText);
+        newRow.appendChild(baseData);
+        newRow.id = newTemplateType + "-table";
+        templateTable.appendChild(newRow);
+    }
+}
+
+function showTemplates() {
+    let templateDiv = document.getElementById("added-templates");
+    templateDiv.style.display = templatesShowing ? "none" : "block";
+    templatesShowing = !templatesShowing;
 }
 
 function showDropDown(passedButton) {
@@ -190,28 +231,6 @@ function showDropDown(passedButton) {
         document.getElementById("templates-drop-down-contents").classList.toggle("show");
     }
 }
-
-function finish() {
-    let data = {};
-    data["templates"] = actionTemplateDict;
-    data["conditionals"] = conditionals;
-    console.log(data);
-    data["videoID"] = currentVideo;
-    let json = JSON.stringify(data);
-    console.log(json);
-    $.ajax({
-        url: 'http://127.0.0.1:5001/api/startedit/',
-        method: 'PUT',
-        dataType: 'json',
-        data: {
-            data: json
-        },
-        success : function (results) {
-            alert("Your video is now being processed! This could take a while.");
-        }
-    });
-}
-
 
 function loadVideo() {
     let input = document.getElementById("input-video");
@@ -244,3 +263,32 @@ window.onkeypress = function(event) {
     }
 };
 
+function finish() {
+    let data = {};
+    data["templates"] = actionTemplateDict;
+    data["conditionals"] = conditionals;
+    console.log(data);
+    data["videoID"] = currentVideo;
+    let json = JSON.stringify(data);
+    console.log(json);
+    $.ajax({
+        url: 'http://127.0.0.1:5001/api/startedit/',
+        method: 'PUT',
+        dataType: 'json',
+        data: {
+            data: json
+        },
+        success : function (results) {
+            alert("Your video is now being processed! This could take a while.");
+        },
+        error : function(results) {
+            if (results.status === 0) {
+                alert("The API isn't currently running!");
+            }
+            else {
+                alert("Something went wrong! Make sure you have added action templates!");
+                console.log(results);
+            }
+        }
+    });
+}
