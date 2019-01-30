@@ -20,9 +20,7 @@ html, body {
 }
 
 #button-options {
-    display: table;
-    position: relative;
-    margin: 0 auto;
+    text-align: center;
 }
 
 #test-canvas {

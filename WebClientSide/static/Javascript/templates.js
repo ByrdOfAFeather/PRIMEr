@@ -4,6 +4,7 @@ let actionTemplateDict = {};
 let conditionals = {};
 let currentTime = null;
 let templatesShowing = false;
+let templateTable = document.getElementById("template-table");
 
 // CREDIT (Inspired from)
 // Kaiido
@@ -83,13 +84,13 @@ function exportTemplate() {
                     actionTemplateDict[currentTemplateType].push(modImage);
                 }
                 finally {
-                    let templateDiv = document.getElementById(currentTemplateType + "-div");
-                    if (!templateDiv) {
-                        templateDiv = document.createElement("div");
-                        templateDiv.id = currentTemplateType + "-div";
-                        document.getElementById("added-templates").appendChild(templateDiv);
-                    }
-                    templateDiv.appendChild(canvas);
+                    let templateTableRow = document.getElementById(currentTemplateType + "-table");
+                    let templatesAlreadyAdded = document.getElementsByClassName(currentTemplateType + "-data").length;
+                    let newTemplate = document.createElement("td");
+                    newTemplate.id = currentTemplateType + "-" + templatesAlreadyAdded;
+                    newTemplate.className = currentTemplateType + "-data";
+                    newTemplate.appendChild(canvas);
+                    templateTableRow.appendChild(newTemplate);
                 }
             }
         }
@@ -176,20 +177,42 @@ function deleteTemplate(event) {
 function addNewTemplate() {
     let templateNameInput = document.getElementById("new-template-type");
     let newTemplateType = templateNameInput.value;
-    templateNameInput.value = "";
-    let addedTemplateType = document.createElement("a");
-    addedTemplateType.href = "#";
-    addedTemplateType.onclick = function (event) {setCurrentTemplateType(event);};
-    addedTemplateType.textContent = newTemplateType;
-    setCurrentTemplateType(newTemplateType);
 
-    let templateImage = document.createElement("img");
-    templateImage.className = "delete-button";
-    templateImage.src = "../static/Resources/deletebutton.png";
-    templateImage.alt = "delete";
-    templateImage.onclick = function(event) { event.preventDefault(); deleteTemplate(event); };
-    addedTemplateType.appendChild(templateImage);
-    document.getElementById("template-drop-down-contents").prepend(addedTemplateType);
+    if (document.getElementById(newTemplateType.toLowerCase())) {
+        alert("You can't add a template with the same name twice!");
+    }
+
+    else {
+        templateNameInput.value = "";
+        let addedTemplateType = document.createElement("a");
+        addedTemplateType.href = "#";
+        addedTemplateType.onclick = function (event) {
+            setCurrentTemplateType(event);
+        };
+        addedTemplateType.id = newTemplateType.toLowerCase();
+        addedTemplateType.textContent = newTemplateType;
+        setCurrentTemplateType(newTemplateType);
+
+        let templateImage = document.createElement("img");
+        templateImage.className = "delete-button";
+        templateImage.src = "../static/Resources/deletebutton.png";
+        templateImage.alt = "delete";
+        templateImage.onclick = function (event) {
+            event.preventDefault();
+            deleteTemplate(event);
+        };
+        addedTemplateType.appendChild(templateImage);
+        document.getElementById("template-drop-down-contents").prepend(addedTemplateType);
+
+        // Add to the table data
+        let newRow = document.createElement("tr");
+        let baseData = document.createElement("td");
+        let baseDataText = document.createTextNode(newTemplateType);
+        baseData.appendChild(baseDataText);
+        newRow.appendChild(baseData);
+        newRow.id = newTemplateType + "-table";
+        templateTable.appendChild(newRow);
+    }
 }
 
 function showTemplates() {
@@ -257,6 +280,15 @@ function finish() {
         },
         success : function (results) {
             alert("Your video is now being processed! This could take a while.");
+        },
+        error : function(results) {
+            if (results.status === 0) {
+                alert("The API isn't currently running!");
+            }
+            else {
+                alert("Something went wrong! Make sure you have added action templates!");
+                console.log(results);
+            }
         }
     });
 }

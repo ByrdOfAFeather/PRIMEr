@@ -16,7 +16,11 @@ Tar Heel Gameplay: http://tarheelgameplay.org
 
 Early version of punishment module: <br>
  [here](https://tarheelgameplay.org/play/?key=florida-spark-calypso) <br>
- [and here](https://tarheelgameplay.org/play/?key=period-norway-mailbox)
+ [and here](https://tarheelgameplay.org/play/?key=period-norway-mailbox) <br> <br>
+ [Base Without Punishment](https://tarheelgameplay.org/play/?key=harris-cave-meteor) <br>
+ [Comparison With Punishment](https://tarheelgameplay.org/play/?key=update-rival-sulfur) <br><br>
+ [Base Without Punishment](https://tarheelgameplay.org/play/?key=cargo-pedro-company)<br>
+ [Comparison With Punishment](https://tarheelgameplay.org/play/?key=acid-cloud-heaven)
 
 <h1 align="center"> Built With </h1>
 
