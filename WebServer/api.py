@@ -104,31 +104,29 @@ def scan_video(yt_id, video_editor_class, specials=None):
 	descriptors = cursor.fetchall()
 	print(f"THESE ARE THE DESCRIPTORS I AM WORKING WITH {descriptors}")
 
-	scanners = []
+	# Gets the template IDs for each template with the current descriptor and create objects for reference
+	current_templates = {}
+
 	for descriptor in descriptors:
-		# Gets all the templates associated with the current descriptor
 		descriptor = descriptor[0]
+		current_templates[descriptor] = []
+		# Gets all the templates associated with the current descriptor
+
 		cursor.execute("""SELECT TEMPLATEID from TEMPLATEPATHS WHERE VIDEOID = (?) AND DESCRIPTOR = (?)""",
 		               (current_video, descriptor))
 		templates = cursor.fetchall()
 
-		# Gets the template IDs for each template with the current descriptor and create objects for reference
-		current_templates = []
 		for template in templates:
 			template_id = template[0]
 			current_template = Template(template_id, DATABASE_PATH)
-			current_templates.append(current_template)
-			print(current_templates)
+			current_templates[descriptor].append(current_template)
 
-		scanner = ThreadedVideoScan(current_templates, video)
-		scanners.append(scanner)
-
-		scanner.start()
-
-	[i.join() for i in scanners]
+	scanner = ThreadedVideoScan(current_templates, descriptors, video)
+	scanner.start()
+	scanner.join()
 
 	final_output = []
-	for scans in scanners: final_output.extend(scans.output)
+	final_output.extend(scanner.output)
 	final_output.sort(key=lambda x: x.time)
 
 	# Development Tools
