@@ -1,8 +1,18 @@
 <h1 align="center"> PRIMEr </h1>
+Tar heel gameplay is a tool built at UNC-Chapel Hill by Gary Bishop to allow anyone to create game like experiences with
+already existing gameplay footage. These are meant to be played by people with learning disabilities as they simplify the 
+game immensely. 
+<br><br>
 
-A project to semi-automate Tar Heel Gameplay
 
-Tar Heel Gameplay: http://tarheelgameplay.org
+PRIMEr is a "primer" of sorts for this website, listed <a href="https://www.tarheelgameplay.org">here</a>. This means that it takes in 
+videos of gameplay and "prepares" them to be played like video games. It does this by asking a user for "actions" which represent
+gameplay moments in the video. Such as moving, attacking, or jumping. It then scans the video with these examples to find all gameplay
+points in the video. Once a list is built containing timepoints, an editor preforms the necessary JSON formatting to 
+allow the video to be inserted into the website. <br><br>
+
+This project's main focus is making the process of adding videos easier for the user adding them. As of now 
+the current interface requires manual insertions of gameplay points across the entire video, a long and tedious process. 
 
 <h1 align="center"> Results </h1>
 
@@ -30,7 +40,12 @@ Early version of punishment module: <br>
 
 openCV: https://github.com/opencv/opencv
 
-matplotlib: https://github.com/matplotlib/matplotlib
+flask: https://github.com/pallets/flask
+
+flask-REST: https://github.com/flask-restful/flask-restful 
+
+flask-CORS: https://github.com/corydolphin/flask-cors
+
 
 <h1 align="center"> Video Sources </h1>
 
