@@ -21,7 +21,11 @@ Early version of punishment module: <br>
  [Comparison With Punishment](https://tarheelgameplay.org/play/?key=update-rival-sulfur) <br><br>
  [Base Without Punishment](https://tarheelgameplay.org/play/?key=cargo-pedro-company)<br>
  [Comparison With Punishment](https://tarheelgameplay.org/play/?key=acid-cloud-heaven)
-
+<br><br>
+[Comparison Without Punishment ScannerV2](https://tarheelgameplay.org/play/?key=fiber-velvet-crater)
+[Comparison With Punishment ScannerV2](https://tarheelgameplay.org/play/?key=list-ticket-solid)
+<br><br>
+[Another Punishment Example ScannerV2](https://tarheelgameplay.org/play/?key=laser-radio-lucas)
 <h1 align="center"> Built With </h1>
 
 openCV: https://github.com/opencv/opencv

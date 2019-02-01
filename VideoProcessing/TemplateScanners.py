@@ -152,7 +152,7 @@ class VideoScanner(TemplateScanner):
 		# Reset the video
 		video.set(1, 0)
 
-		threshold = sum(list_of_maxes) / len(list_of_maxes) + (np.std(list_of_maxes))
+		threshold = sum(list_of_maxes) / len(list_of_maxes)  # + (np.std(list_of_maxes))
 		return threshold
 
 	def scan_video(self, video):
@@ -297,10 +297,10 @@ class _VideoThreader(Thread, TemplateScanner):
 		video.set(cv2.CAP_PROP_POS_FRAMES, self.frame_indexes[0])
 
 		# Slider as to not get all frames of a single template, instead only getting as close to the first one as possible
-		sliders = {descriptor: [0, 0, 0, 0, 0, 0, 0, 0] for descriptor in self.templates.keys()}
+		sliders = {descriptor: [0, 0, 0, 0] for descriptor in self.templates.keys()}
 
 		# Slider to keep track of the image frames as corresponding to the original slider
-		image_slider = [0, 0, 0, 0, 0, 0, 0, 0]
+		image_slider = [0, 0, 0, 0]
 
 		# Defaults the skip index to -1 so as to not create an infinite loop
 		skip_index = -1
@@ -321,8 +321,8 @@ class _VideoThreader(Thread, TemplateScanner):
 					skip_index += 1
 					frame += 1
 
-					sliders = {descriptor: [0, 0, 0, 0, 0, 0, 0, 0] for descriptor in self.templates.keys()}
-					image_slider = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+					sliders = {descriptor: [0, 0, 0, 0] for descriptor in self.templates.keys()}
+					image_slider = [0, 0, 0, 0]
 
 					continue
 

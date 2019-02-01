@@ -53,7 +53,7 @@ class _VideoEditor:
 			"vocabulary": f"{all_markers}".replace("[", "").replace("]", "").replace(",", "").replace("'", ""),
 			"tags": ["advanced"],
 			"kind": "advanced",
-			"duration": int(self.timestamps[-1].time.total_seconds()),
+			# "duration": int(self.timestamps[-1].time.total_seconds()),
 			"dof": len(all_markers),
 		}
 
@@ -195,28 +195,38 @@ class ConditionalEditor(_VideoEditor):
 		return return_list
 
 	def build_choices_json(self, current_class, index_of_timestamps, nearest_times):
-		choices = [
-			{
-				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
-				"prompt": nearest_times[0].marker,
-				"next": round(nearest_times[0].time.total_seconds() + .1, 2)
-			}
-		]
 
 		# this is used to make multiple "Continue" choices near the punishment timestamp so that they can point to
 		# different points in the video. (This is needed so the video can go right back to where a mistake was made)
 		self.punishment_offset += .2
+		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
+
+		choices = [
+			{
+				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
+				"prompt": nearest_times[0].marker,
+				"next": incorrect_time
+			}
+		]
 
 		descriptor_tracker = []
-		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
-		for nearby_time in nearest_times[1:]:
+		for index, nearby_time in enumerate(nearest_times[1:]):
 			if nearby_time.marker not in descriptor_tracker:
-				choices.append(
-					{
-						"prompt": nearby_time.marker,
-						"next": incorrect_time
-					}
-				)
+				if index == 0:
+					choices.append(
+						{
+							"prompt": nearby_time.marker,
+							"next": round(nearest_times[0].time.total_seconds() + .1, 2)
+						}
+					)
+
+				else:
+					choices.append(
+						{
+							"prompt": nearby_time.marker,
+							"next": incorrect_time
+						}
+					)
 
 			descriptor_tracker.append(nearby_time.marker)
 
