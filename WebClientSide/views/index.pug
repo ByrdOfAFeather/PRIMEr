@@ -1,0 +1,44 @@
+doctype html
+head
+  link(rel='stylesheet' href='stylesheets/style.css')
+  meta(charset='UTF-8')
+  title Image Selector
+label#input-video-label.tar-heel-label(for='input-video')
+  | Youtube Video Link:
+  input#input-video(type='text')
+  button#input-video-button.tar-heel-button(onclick='loadVideo();') Load
+// - Loads the video -
+#video-container
+  video#current-video(controls='controls')
+    source(src='videos/ylbwTpMhZ3k.mp4')
+  canvas#test-canvas
+#screengrab-container(style='')
+// - Adds templates to the database -
+#button-options
+  label.tar-heel-label(for='new-template-type')
+    | Add New Action Type:
+    input#new-template-type(type='text' placeholder='Action Name')
+    button#new-template-button.tar-heel-button(onclick='addNewTemplate();') Add
+  #drop-down
+    button#template-drop-down-button.tar-heel-button.drop-down(onclick='showDropDown(this);')
+      | Select Action Type
+    #template-drop-down-contents.drop-down-contents
+      a#punishment.conditional-action-type(href='#' onclick='setCurrentTemplateType(event)')
+        | Punishment
+        img.delete-button(src='images/deletebutton.png' alt='delete' onclick='event.preventDefault(); deleteTemplate(event);')
+  #template-buttons
+    button#export_button.tar-heel-button(onclick='exportTemplate();') Add Action Example
+    #show-templates-contents
+      button#show-templates.tar-heel-button.drop-down(onclick='showTemplates();') Show Action Examples
+      #added-templates.drop-down-contents
+        table#template-table
+          tr#template-table-headers
+            th Template Name
+  button#grab-screen-button.tar-heel-button.drop-down(onclick='grabScreen();')
+    | Capture Current Screen
+  button#finish-button.tar-heel-button(onclick='finish();') Finish
+// - Scripts for rectangles -
+script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js')
+script(src='javascripts/selectors.js')
+script(src='javascripts/templates.js')
+script(src='https://html2canvas.hertzen.com/dist/html2canvas.min.js')
