@@ -68,7 +68,7 @@ function exportTemplate() {
         function (canvas) {
             if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
 
-            else if (document.getElementById(currentTemplateType.toLowerCase()).classList[0] === "conditional-action-type") {
+            if (document.getElementById(currentTemplateType.toLowerCase())) {
                 conditionals[currentTemplateType] = [];
                 conditionals[currentTemplateType].push(currentTime);
             }
@@ -80,7 +80,6 @@ function exportTemplate() {
                     actionTemplateDict[currentTemplateType].push(modImage);
                 }
                 catch (TypeError) {
-                    console.log("I Actually got Here");
                     actionTemplateDict[currentTemplateType] = [];
                     actionTemplateDict[currentTemplateType].push(modImage);
                 }
@@ -196,7 +195,7 @@ function addNewTemplate() {
 
         let templateImage = document.createElement("img");
         templateImage.className = "delete-button";
-        templateImage.src = "images/deletebutton.png";
+        templateImage.src = "../static/Resources/deletebutton.png";
         templateImage.alt = "delete";
         templateImage.onclick = function (event) {
             event.preventDefault();
@@ -233,7 +232,12 @@ function showDropDown(passedButton) {
     }
 }
 
+function displayNewVideo(link) {
+    // TODO: API CALL?
+}
+
 function loadVideo() {
+    console.log("I got here");
     let input = document.getElementById("input-video");
     let link = input.value;
     if (link.slice(0, 32) !== "https://www.youtube.com/watch?v=") {
@@ -243,6 +247,7 @@ function loadVideo() {
         let linkID = link.slice(32);
         currentVideo = linkID;
     }
+    displayNewVideo(link);
 }
 
 window.onclick = function(event) {
