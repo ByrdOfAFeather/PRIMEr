@@ -51,11 +51,12 @@ def string_to_timedelta(org_string):
 
 def edit_video(timestamps, yt_id, video_editor_class, specials=None):
 	if video_editor_class == ConditionalEditor:
-		tester = video_editor_class(timestamps, yt_id, specials)
+		assert specials is not None, "GOT NO SPECIALS BUT GOT CONDITIONAL EDITOR, BREAKING"
+		editor = video_editor_class(timestamps, yt_id, specials)
 	else:
-		tester = video_editor_class(timestamps, yt_id)
+		editor = video_editor_class(timestamps, yt_id)
 
-	editor_result = tester.edit()
+	editor_result = editor.edit()
 	output_json = str(editor_result).replace("'", '"')
 
 	print(f"FINAL OUTPUT JSON: {output_json}")
@@ -93,35 +94,30 @@ def scan_video(yt_id, video_editor_class, specials=None):
 	# TODO: Find a more robust way of storing unique video IDs
 	# Gets the video ID, in this case, the most recent video added to the database is assumed to be the correct one
 	cursor.execute("""SELECT MAX(VIDEOID) from VIDEOPATHS""")
-	current_video = cursor.fetchall()[0][0]
+	results = cursor.fetchall()
+	print(f"HEY THIS IS THAT TEST YOU WANT TO REMEMBER {results}")
+	current_video = results[0][0]
 
 	# Gets the video path associated with the most recent ID
 	cursor.execute("""SELECT VIDEOPATH from VIDEOPATHS where VIDEOID = (?)""", (current_video,))
 	video = cursor.fetchall()[0][0]
 
 	# Gets a list of unique descriptors for the templates associated with the video
-	cursor.execute("""SELECT DISTINCT DESCRIPTOR from TEMPLATEPATHS WHERE VIDEOID = (?)""", (current_video,))
-	descriptors = cursor.fetchall()
-	print(f"THESE ARE THE DESCRIPTORS I AM WORKING WITH {descriptors}")
+	# cursor.execute("""SELECT * FROM TEMPLATEPATHS GROUP BY DESCRIPTOR""")
+	cursor.execute("""SELECT DISTINCT DESCRIPTOR, TEMPLATEID, TEMPLATEPATH from TEMPLATEPATHS WHERE VIDEOID = (?)""", (current_video,))
+	unique_descriptors = cursor.fetchall()
+	print(f"THIS IS THE RESULT FROM QUERY {unique_descriptors}")
 
 	# Gets the template IDs for each template with the current descriptor and create objects for reference
 	current_templates = {}
 
-	for descriptor in descriptors:
-		descriptor = descriptor[0]
-		current_templates[descriptor] = []
-		# Gets all the templates associated with the current descriptor
+	for descriptor, template_id, template_path in unique_descriptors:
+		try:
+			current_templates[descriptor].append(Template(template_id, template_path, descriptor))
+		except KeyError:
+			current_templates[descriptor] = [Template(template_id, template_path, descriptor)]
 
-		cursor.execute("""SELECT TEMPLATEID from TEMPLATEPATHS WHERE VIDEOID = (?) AND DESCRIPTOR = (?)""",
-		               (current_video, descriptor))
-		templates = cursor.fetchall()
-
-		for template in templates:
-			template_id = template[0]
-			current_template = Template(template_id, DATABASE_PATH)
-			current_templates[descriptor].append(current_template)
-
-	scanner = ThreadedVideoScan(current_templates, descriptors, video)
+	scanner = ThreadedVideoScan(current_templates, video)
 	scanner.start()
 	scanner.join()
 

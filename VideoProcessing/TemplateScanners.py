@@ -1,6 +1,5 @@
 from VideoProcessing.Timestamp import Timestamp
 from threading import Thread
-import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 import cv2
@@ -26,7 +25,7 @@ class TemplateScanner:
 		self.cur_results = None
 
 		# Note that thresholds are built in the build_image_threshold_dict for efficiency reasons if set to None
-		self.thresholds = threshold if threshold else None
+		self.threshold = threshold if threshold else None
 		self.templates = self._build_image_threshold_dict()
 
 	def _build_image_threshold_dict(self):
@@ -44,9 +43,9 @@ class TemplateScanner:
 				image_color_flipped = cv2.flip(image_color, 1)
 				template_dict[name].append(image_color)
 				template_dict[name].append(image_color_flipped)
-			if not self.thresholds: thresholds[name] = 0
+			if not self.threshold: thresholds[name] = 0
 
-		if not self.thresholds: self.thresholds = thresholds
+		if not self.threshold: self.threshold = thresholds
 		return template_dict
 
 	@staticmethod
@@ -72,18 +71,16 @@ class TemplateScanner:
 			all_template_maxes[descriptor] = None
 			current_template_maxes = {}
 			for template in self.templates[descriptor]:
-				# Gets the results from cv2's image match on a single template for a single image
-				results = self._match_template(image, template, "cv2.TM_CCOEFF")
+				results = self._match_template(image, template, "cv2.TM_CCOEFF_NORMED")
 
 				# Gets the highest template match value
 				_, max_val, _, _ = cv2.minMaxLoc(results)
 				current_template_maxes[max_val] = (results, max_val)
 
 			best_match_for_current_descriptor = max(current_template_maxes.keys())
-
 			self.cur_results = current_template_maxes[best_match_for_current_descriptor]
 
-			if best_match_for_current_descriptor >= self.thresholds[descriptor]:
+			if best_match_for_current_descriptor >= self.threshold:
 				positive_matches.append((descriptor, best_match_for_current_descriptor))
 				all_template_maxes[descriptor] = current_template_maxes[best_match_for_current_descriptor]
 
@@ -91,8 +88,8 @@ class TemplateScanner:
 			cur_max = 0
 			cur_max_descriptor = ""
 			for descriptor, match_value in positive_matches:
-				if cur_max < match_value - self.thresholds[descriptor]:
-					cur_max = (match_value - self.thresholds[descriptor])
+				if cur_max < match_value - self.threshold:
+					cur_max = (match_value - self.threshold)
 					cur_max_descriptor = descriptor
 
 			self.cur_results = all_template_maxes[cur_max_descriptor]
@@ -240,7 +237,7 @@ class _VideoThreader(Thread, TemplateScanner):
 		output                          Due to the nature of threading, the return value for this thread, either a specific threashold or a list of timestamps
 	"""
 	def __init__(self, templates, video_path, frame_indexes,
-	             thresholds, return_values=RETURN_TIMESTAMPS
+	             threshold, return_values=RETURN_TIMESTAMPS
 	             ):
 		"""Initializer for _VideoThreader
 		Parameters and their functions defined in class description
@@ -254,38 +251,9 @@ class _VideoThreader(Thread, TemplateScanner):
 		TemplateScanner.__init__(self, templates=templates)
 		self.video_path = video_path
 		self.frame_indexes = frame_indexes
-		self.threshold = thresholds
+		self.threshold = threshold
 		self.return_value = return_values
 		self.output = None
-
-	def _get_threshold(self):
-		"""Sets output to a list of tuples (sum of all matches in frames, number of matches attempted)
-		:return: None
-		"""
-		video = cv2.VideoCapture(self.video_path)
-		video.set(cv2.CAP_PROP_POS_FRAMES, self.frame_indexes[0])
-
-		buffer_frames = 10
-		frame_count = self.frame_indexes[1]
-
-		assert frame_count > 0, "FRAME COUNT IS 0. PROBABLY A BROKEN FILE PATH."
-
-		# Minus the frame count by 10 to give a little buffer room so that the video doesnt run out of frames)
-		list_of_maxes = []
-		frame_index = self.frame_indexes[0]
-		number_scanned = 0
-		while frame_index < (frame_count - buffer_frames):
-			video.set(cv2.CAP_PROP_POS_FRAMES, frame_index)
-			more_frames, frame = video.read()
-			if not more_frames: break
-			self.scan(frame)
-			list_of_maxes.append(self.cur_results[1])
-			number_scanned += 1
-			frame_index += 10
-
-		sum_and_length = (sum(list_of_maxes), number_scanned)
-		self.output = sum_and_length
-		del video
 
 	def _get_timestamps(self):
 		"""Sets output to a list of datetime.timedelta objects representing where a template was matched
@@ -295,6 +263,8 @@ class _VideoThreader(Thread, TemplateScanner):
 
 		timestamps = []
 		video.set(cv2.CAP_PROP_POS_FRAMES, self.frame_indexes[0])
+
+		fps = video.get(cv2.CAP_PROP_FPS)
 
 		# Slider as to not get all frames of a single template, instead only getting as close to the first one as possible
 		sliders = {descriptor: [0, 0, 0, 0] for descriptor in self.templates.keys()}
@@ -319,7 +289,7 @@ class _VideoThreader(Thread, TemplateScanner):
 
 					# increase the frame
 					skip_index += 1
-					frame += 1
+					np.add(frame, fps, casting="unsafe")
 
 					sliders = {descriptor: [0, 0, 0, 0] for descriptor in self.templates.keys()}
 					image_slider = [0, 0, 0, 0]
@@ -359,7 +329,7 @@ class _VideoThreader(Thread, TemplateScanner):
 					                            datetime.timedelta(seconds=video.get(cv2.CAP_PROP_POS_MSEC) / 1000)))
 
 					skip_index = 0
-				frame += 1
+				np.add(frame, fps, casting="unsafe")
 
 			else:
 				break
@@ -368,9 +338,7 @@ class _VideoThreader(Thread, TemplateScanner):
 		self.output = timestamps
 
 	def run(self):
-		if self.return_value == RETURN_THRESHOLD:
-			self._get_threshold()
-		elif self.return_value == RETURN_TIMESTAMPS:
+		if self.return_value == RETURN_TIMESTAMPS:
 			self._get_timestamps()
 
 
@@ -403,7 +371,7 @@ class ThresholdFinder(TemplateScanner, Thread):
 		all_threads = []
 		assert frame_indicies, "NO FRAME INDICES WERE PASSED! BREAKING!"
 		for frames in frame_indicies:
-			current_threads = _VideoThreader(self.templates, video, frames, thresholds=None,
+			current_threads = _VideoThreader(self.templates, video, frames, threshold=None,
 			                                 return_values=RETURN_THRESHOLD, )
 			all_threads.append(current_threads)
 			current_threads.start()
@@ -458,7 +426,7 @@ class VideoScannerThreaded(TemplateScanner):
 		TemplateScanner.__init__(self, templates)  # While still a scanner, uses no methods in TemplateSc
 		self.output = []
 		self.templates = templates  # Saves the file name for templates
-		self.thresholds = thresholds
+		self.threshold = thresholds
 
 	def thread_scanners(self, video, divisor=600):
 		"""Scans a passed video for the templates belonging to the instance
@@ -480,7 +448,7 @@ class VideoScannerThreaded(TemplateScanner):
 			current_frame += divisor
 
 		for frames in frame_indices:
-			threads = _VideoThreader(self.templates, video, frames, self.thresholds)
+			threads = _VideoThreader(self.templates, video, frames, self.threshold)
 			self.output.append(threads)
 			threads.start()
 
@@ -494,7 +462,7 @@ class ThreadedVideoScan(Thread):
 		video_path  A path to the video that this thread is responsible for
 		output      Due to the nature of threads, the output of the run function
 	"""
-	def __init__(self, templates, descriptors, video):
+	def __init__(self, templates, video):
 		"""Initialization for ThreadedVideoScanner
 		Parameters and their functions defined in class description
 		:type templates: dict{str:Template}
@@ -505,26 +473,10 @@ class ThreadedVideoScan(Thread):
 		self.templates = templates
 		self.video_path = video
 		self.output = []
-		self.descriptors = descriptors
 
 	def run(self):
-		threaded_thresholds = {}
-		for descriptors in self.templates.keys():
-			smaller_dict = {descriptors: self.templates[descriptors]}
-			finder = ThresholdFinder(smaller_dict, self.video_path, divisor=600)
-			threaded_thresholds[descriptors] = finder
-			finder.start()
-
-		[i.join() for i in threaded_thresholds.values()]
-		print(threaded_thresholds.items())
-
-		threshold_dict = {}
-		for descriptors, thresholds in threaded_thresholds.items():
-			print(thresholds.output)
-			threshold_dict[descriptors] = thresholds.output
-
-		print(f"THIS IS THRESHOLD DICT {threshold_dict}")
-		scanner = VideoScannerThreaded(self.templates, threshold_dict)
+		threshold = .7
+		scanner = VideoScannerThreaded(self.templates, threshold)
 		scanner_threads = scanner.thread_scanners(self.video_path)
 		[threads.join() for threads in scanner_threads]
 

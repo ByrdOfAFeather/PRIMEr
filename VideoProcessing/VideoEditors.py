@@ -201,34 +201,44 @@ class ConditionalEditor(_VideoEditor):
 		self.punishment_offset += .2
 		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
 
-		choices = [
-			{
-				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
-				"prompt": nearest_times[0].marker,
-				"next": incorrect_time
-			}
-		]
+		if len(nearest_times) == 1:
+			choices = [
+				{
+					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
+					"prompt": nearest_times[0].marker,
+					"next": nearest_times[0].time.total_seconds() + .1
+				}
+			]
 
-		descriptor_tracker = []
-		for index, nearby_time in enumerate(nearest_times[1:]):
-			if nearby_time.marker not in descriptor_tracker:
-				if index == 0:
-					choices.append(
-						{
-							"prompt": nearby_time.marker,
-							"next": round(nearest_times[0].time.total_seconds() + .1, 2)
-						}
-					)
+		else:
+			choices = [
+				{
+					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
+					"prompt": nearest_times[0].marker,
+					"next": incorrect_time
+				}
+			]
 
-				else:
-					choices.append(
-						{
-							"prompt": nearby_time.marker,
-							"next": incorrect_time
-						}
-					)
+			descriptor_tracker = []
+			for index, nearby_time in enumerate(nearest_times[1:]):
+				if nearby_time.marker not in descriptor_tracker:
+					if index == 0:
+						choices.append(
+							{
+								"prompt": nearby_time.marker,
+								"next": round(nearest_times[0].time.total_seconds() + .1, 2)
+							}
+						)
 
-			descriptor_tracker.append(nearby_time.marker)
+					else:
+						choices.append(
+							{
+								"prompt": nearby_time.marker,
+								"next": incorrect_time
+							}
+						)
+
+				descriptor_tracker.append(nearby_time.marker)
 
 		return [
 			{
