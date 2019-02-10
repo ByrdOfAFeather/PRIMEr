@@ -36,6 +36,10 @@ Early version of punishment module: <br>
 [Comparison With Punishment ScannerV2](https://tarheelgameplay.org/play/?key=list-ticket-solid)
 <br><br>
 [Another Punishment Example ScannerV2](https://tarheelgameplay.org/play/?key=laser-radio-lucas)
+<br><br>
+[HD Video Example](https://tarheelgameplay.org/play/?key=turtle-before-mask)
+<br><br>
+[Transformers Example](https://tarheelgameplay.org/play/?key=manila-bonjour-game)
 <h1 align="center"> Built With </h1>
 
 openCV: https://github.com/opencv/opencv

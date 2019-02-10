@@ -1,7 +1,7 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
 from database import DATABASE_PATH
-from VideoProcessing.TemplateScanners import ThreadedVideoScan
+from TemplateScanners import ThreadedVideoScan
 from VideoProcessing.Template import Template
 from VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
 from VideoProcessing.Timestamp import Timestamp
@@ -113,16 +113,14 @@ def scan_video(yt_id, video_editor_class, specials=None):
 
 	for descriptor, template_id, template_path in unique_descriptors:
 		try:
-			current_templates[descriptor].append(Template(template_id, template_path, descriptor))
+			current_templates[descriptor].append(template_path)
 		except KeyError:
-			current_templates[descriptor] = [Template(template_id, template_path, descriptor)]
+			current_templates[descriptor] = [template_path]
+	print(video)
+	print(current_templates)
 
-	scanner = ThreadedVideoScan(current_templates, video)
-	scanner.start()
-	scanner.join()
-
-	final_output = []
-	final_output.extend(scanner.output)
+	scanner = ThreadedVideoScan()
+	final_output = scanner.run(current_templates, video, .7)
 	final_output.sort(key=lambda x: x.time)
 
 	# Development Tools

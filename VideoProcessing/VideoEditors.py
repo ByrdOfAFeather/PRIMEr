@@ -61,14 +61,14 @@ class _VideoEditor:
 		print(f"NUMBER OF UNIQUE TEMPLATE DESCRIPTORS: {len(all_markers)}")
 		print(f"TEMPLATE DESCRIPTORS: {all_markers}")
 		print(f"NUMBER OF TEMPLATE POSITIVES RETURNED: {len(self.timestamps)}")
-		print(f"THIS IS THE LIST OF TIMESTAMPS: {[i.time.total_seconds() for i in self.timestamps]}")
+		print(f"THIS IS THE LIST OF TIMESTAMPS: {[i.time for i in self.timestamps]}")
 		print("=== END EDITING INFORMATION ===")
 
 		self.index = 0
 		while self.index < len(self.timestamps) - 1:
 			current_class = self.timestamps[self.index].marker
 
-			nearest_times = self.get_nearest_descriptors(self.index, datetime.timedelta(seconds=4))
+			nearest_times = self.get_nearest_descriptors(self.index, 4.0)
 			if nearest_times == self.FINAL_ITEM_IN_LIST: break
 			if nearest_times == self.NO_APPLICABLE_CHOICES:
 				self.index += 1
@@ -122,7 +122,7 @@ class VanillaEditor(_VideoEditor):
 			{
 				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 				"prompt": current_class,
-				"next": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1)
+				"next": round(self.timestamps[index_of_timestamps].time, 1)
 			}
 		]
 
@@ -133,14 +133,14 @@ class VanillaEditor(_VideoEditor):
 				choices.append(
 					{
 						"prompt": nearby_time.marker,
-						"next": round(nearby_time.time.total_seconds(), 1)
+						"next": round(nearby_time.time, 1)
 					}
 				)
 			descriptor_tracker.append(nearby_time.marker)
 
 		return [
 			{
-				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 1),
+				"time": round(self.timestamps[index_of_timestamps].time, 1),
 				"choices": choices
 			}
 		]
@@ -183,7 +183,7 @@ class ConditionalEditor(_VideoEditor):
 				break
 
 			# If the time stamps are nearing the specials, return what is already provided
-			specials_at_index = abs(timestamps.time.total_seconds() - self.specials["Punishment"]) <= 4
+			specials_at_index = abs(timestamps.time - self.specials["Punishment"]) <= 4
 			if specials_at_index:
 				end_index = index + start_index
 				break
@@ -206,7 +206,7 @@ class ConditionalEditor(_VideoEditor):
 				{
 					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 					"prompt": nearest_times[0].marker,
-					"next": nearest_times[0].time.total_seconds() + .1
+					"next": nearest_times[0].time + .1
 				}
 			]
 
@@ -226,7 +226,7 @@ class ConditionalEditor(_VideoEditor):
 						choices.append(
 							{
 								"prompt": nearby_time.marker,
-								"next": round(nearest_times[0].time.total_seconds() + .1, 2)
+								"next": round(nearest_times[0].time + .1, 2)
 							}
 						)
 
@@ -242,7 +242,7 @@ class ConditionalEditor(_VideoEditor):
 
 		return [
 			{
-				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
+				"time": round(self.timestamps[index_of_timestamps].time, 2),
 				"choices": choices
 			},
 			{
@@ -250,7 +250,7 @@ class ConditionalEditor(_VideoEditor):
 				"choices": [
 					{
 						"prompt": "Continue",
-						"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 2)
+						"next": round(self.timestamps[index_of_timestamps].time - .1, 2)
 					}
 				]
 			}
