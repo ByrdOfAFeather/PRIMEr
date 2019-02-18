@@ -2,16 +2,16 @@ cmake_minimum_required(VERSION 3.12)
 project(PRIMEr)
 
 set(CMAKE_CXX_STANDARD 14)
-find_package( OpenCV REQUIRED ) # locate OpenCV in system
-include_directories( ${OpenCV_INCLUDE_DIRS} ) # provide library headers
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 find_package(Boost 1.67.0 COMPONENTS system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
-#set(Python_ADDITIONAL_VERSIONS 3.6)
 find_package(PythonLibs 3 REQUIRED)
 find_package (Python3 COMPONENTS Interpreter Development)
 include_directories(${Python3_INCLUDE_DIRS})
 
 #add_executable(PRIMEr main.cpp TemplateScanners.cpp)
+#target_link_libraries( PRIMEr ${OpenCV_LIBS} ${Boost_LIBRARIES} -lboost_python3 ${Python_LIBRARIES} -lpthread)
 add_library(templatescanners SHARED TemplateScanners.cpp)
 target_link_libraries( templatescanners ${OpenCV_LIBS} ${Boost_LIBRARIES} -lboost_python3 ${Python_LIBRARIES} -lpthread) # link OpenCV libraries , hightgui.so not found by cmake so this hack
 

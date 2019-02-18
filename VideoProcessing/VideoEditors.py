@@ -68,7 +68,7 @@ class _VideoEditor:
 		while self.index < len(self.timestamps) - 1:
 			current_class = self.timestamps[self.index].marker
 
-			nearest_times = self.get_nearest_descriptors(self.index, 4.0)
+			nearest_times = self.get_nearest_descriptors(self.index, 2.0)
 			if nearest_times == self.FINAL_ITEM_IN_LIST: break
 			if nearest_times == self.NO_APPLICABLE_CHOICES:
 				self.index += 1

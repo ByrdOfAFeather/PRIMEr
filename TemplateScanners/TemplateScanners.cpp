@@ -48,7 +48,7 @@ public:
             std::deque<std::string> paths = currentItems.second;
             for (const std::string &currentPath: paths) {
                 // Reads the image and make sure it exists
-                cv::Mat loadedImage = imread(currentPath, cv::IMREAD_GRAYSCALE);
+                cv::Mat loadedImage = imread(currentPath, cv::IMREAD_COLOR);
                 if (loadedImage.empty()) { cout << "FAILED TO LOAD IMAGE "; cout << currentPath << endl;}
 
                 // Gets the reversed image
@@ -99,7 +99,7 @@ public:
 
         // Finds best match above the threshold
         if (positive.size() > 1) {
-            int mostProbableDescriptorValue = 0;
+            double mostProbableDescriptorValue = 0;
             std::string mostProbableDescriptor;
             for (auto const &currentMaxes : positive) {
                 std::string currentDescriptor = currentMaxes.first;
@@ -146,18 +146,20 @@ public:
         video.set(cv::CAP_PROP_POS_FRAMES, frameIndexes[0]);
         double fps = video.get(cv::CAP_PROP_FPS);
 
+//        if (false) {
+//            double windowNumber = video.get(cv::CAP_PROP_POS_FRAMES);
+//            cv::namedWindow("Display window " + std::to_string(windowNumber),
+//                            WINDOW_AUTOSIZE);// Create a window for display.
+//        }
+
         while(true) {
             // Read the next frame
             cv::Mat currentFrame;
             video.read(currentFrame);
 
             if (video.get(cv::CAP_PROP_POS_FRAMES) < frameIndexes[1] && !currentFrame.empty()) {
-                // If the frame exists convert to grayscale to match template conversion to grayscale
-                cv::Mat scanFrame;
-                cv::cvtColor(currentFrame, scanFrame, cv::COLOR_RGB2GRAY);
-
                 // Scan the frame with the current templates
-                std::string exportDescriptor = scan(scanFrame);
+                std::string exportDescriptor = scan(currentFrame);
 
 
                 if (!exportDescriptor.empty()) {
@@ -166,19 +168,27 @@ public:
                     cout << "EXPORTING : ";
                     cout << exportDescriptor << endl;
 
+                    // Testing code for running from C++
+//                    if (false) {
+//                        cv::imshow("Display window " + std::to_string(windowNumber), currentFrame);
+//                        cv::waitKey(0);
+//                    }
+
                     Timestamp currentTime(exportDescriptor, video.get(cv::CAP_PROP_POS_MSEC) / 1000);
                     timestamps.push_front(currentTime);
                 }
 
                 // Move a second in the video
                 double currentFrameNumber = video.get(cv::CAP_PROP_POS_FRAMES);
-                video.set(cv::CAP_PROP_POS_FRAMES, currentFrameNumber + fps);
+                video.set(cv::CAP_PROP_POS_FRAMES, currentFrameNumber + (fps / 2));
             }
 
             else {
                 break;
             }
         }
+
+        video.release();
         return timestamps;
     }
 };
@@ -212,7 +222,7 @@ public:
         std::deque<std::future<std::deque<Timestamp>>> futures;
         int frameSections = 0;
         int currentFrameStart = 0;
-        int currentFrameEnd = 0;
+        int currentFrameEnd = divisor;
         while (frame_count > divisor * frameSections) {
             VideoScannerThreaded currentVideoScanner(templates, videoPath, currentFrameStart, currentFrameEnd,
                                                      threshold);
@@ -221,7 +231,7 @@ public:
                     currentVideoScanner);
             futures.push_front(std::move(currentPromisedFuture));
             currentFrameStart += divisor;
-            currentFrameEnd += divisor * 2;
+            currentFrameEnd += divisor;
             frameSections += 1;
         }
 
@@ -270,15 +280,36 @@ public:
         }
         return pythonTimestamps;
     }
+
+    void runTest(DescriptorToTemplatesMap templates, std::string videoPath, double threshold) {
+        VideoThreader scanner(templates, threshold);
+        std::deque<Timestamp> times;
+        times = scanner.thread_scanners(videoPath);
+        for (Timestamp &time : times) {
+            cout << time.time << endl;
+            cout << time.descriptor << endl;
+        }
+    }
 };
 
 
 int main() {
-    return 0;
+    // Build Test Map
+    DescriptorToTemplatesMap testMap;
+    std::deque<std::string> testImagePaths;
+    testImagePaths.push_front("0.png");
+    testMap["Jump"] = testImagePaths;
+
+    // Build Video Path
+    std::string videoPath = "mm.mp4";
+
+    // Start test
+    ThreadedVideoScan testScanner;
+    testScanner.runTest(testMap, videoPath, .7);
 }
 
 
-// Export code to Python ready module
+
 BOOST_PYTHON_MODULE(templatescanners) {
     class_<ThreadedVideoScan>("ThreadedVideoScan")
             .def("run", &ThreadedVideoScan::run);
