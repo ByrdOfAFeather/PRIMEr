@@ -14,7 +14,7 @@ allow the video to be inserted into the website. <br><br>
 This project's main focus is making the process of adding videos easier for the user adding them. As of now 
 the current interface requires manual insertions of gameplay points across the entire video, a long and tedious process. 
 
-<h1 align="center"> Building TemplateScanners
+<h1 align="center"> Building TemplateScanners </h1>
 
 The process of building the template scanner module from the provided C++ code is fairly straightforward. It is highly 
 recommended that this is built using linux as the build process with windows is significantly more complex, however, it 
