@@ -106,9 +106,9 @@ venv.bak/
 .idea
 
 
-/SideScrollers/VideoProcessing/Sources
-/SideScrollers/VideoProcessing/Output
-/SideScrollers/VideoProcessing/Results
+VideoProcessing/Sources
+VideoProcessing/Output
+VideoProcessing/Results
 /ResourceCreation/
 /WebClientSide/static/Javascript/html2canvas.js
 TODO.txt
