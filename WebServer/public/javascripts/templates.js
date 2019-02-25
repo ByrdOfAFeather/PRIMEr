@@ -43,12 +43,21 @@ function exportTemplate() {
     else {
         realRectX = rectangleX - position["left"];
         realRectY = rectangleY - position["top"];
+        let currentFrame = currentTime * 30;
         try {
-            actionTemplateDict[currentTemplateType].push({realRectX, realRectY, rectangleHeight, rectangleWidth});
+            actionTemplateDict[currentTemplateType].push({realRectX,
+                realRectY,
+                rectangleHeight,
+                rectangleWidth,
+                currentFrame});
         }
         catch (TypeError) {
             actionTemplateDict[currentTemplateType] = [];
-            actionTemplateDict[currentTemplateType].push({realRectX, realRectY, rectangleHeight, rectangleWidth});
+            actionTemplateDict[currentTemplateType].push({realRectX,
+                realRectY,
+                rectangleHeight,
+                rectangleWidth,
+                currentFrame});
         }
         finally {
             let templateTableRow = document.getElementById(currentTemplateType + "-table");

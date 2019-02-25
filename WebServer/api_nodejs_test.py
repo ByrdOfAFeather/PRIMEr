@@ -1,18 +1,18 @@
 import sys
 sys.path.append("..")
 from database import DATABASE_PATH
-from SideScrollers.VideoProcessing.TemplateScanners import ThreadedVideoScan
-from SideScrollers.VideoProcessing.Template import Template
-from SideScrollers.VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
-from SideScrollers.VideoProcessing.Timestamp import Timestamp
+from templatescanners import ThreadedVideoScan
+from VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
+from VideoProcessing.Timestamp import Timestamp
 from threading import Thread
 import os
 import sqlite3 as sql
 import json
-import urllib
-import base64
+import urllib.request
+import urllib.parse
 import shutil
 import datetime
+import cv2
 
 
 # Generic function to parse lists into a sql readable format
@@ -35,11 +35,12 @@ def string_to_timedelta(org_string):
 
 def edit_video(timestamps, yt_id, video_editor_class, specials=None):
 	if video_editor_class == ConditionalEditor:
-		tester = video_editor_class(timestamps, yt_id, specials)
+		assert specials is not None, "GOT NO SPECIALS BUT GOT CONDITIONAL EDITOR, BREAKING"
+		editor = video_editor_class(timestamps, yt_id, specials)
 	else:
-		tester = video_editor_class(timestamps, yt_id)
+		editor = video_editor_class(timestamps, yt_id)
 
-	editor_result = tester.edit()
+	editor_result = editor.edit()
 	output_json = str(editor_result).replace("'", '"')
 
 	print(f"FINAL OUTPUT JSON: {output_json}")
@@ -77,42 +78,33 @@ def scan_video(yt_id, video_editor_class, specials=None):
 	# TODO: Find a more robust way of storing unique video IDs
 	# Gets the video ID, in this case, the most recent video added to the database is assumed to be the correct one
 	cursor.execute("""SELECT MAX(VIDEOID) from VIDEOPATHS""")
-	current_video = cursor.fetchall()[0][0]
+	results = cursor.fetchall()
+	print(f"HEY THIS IS THAT TEST YOU WANT TO REMEMBER {results}")
+	current_video = results[0][0]
 
 	# Gets the video path associated with the most recent ID
 	cursor.execute("""SELECT VIDEOPATH from VIDEOPATHS where VIDEOID = (?)""", (current_video,))
 	video = cursor.fetchall()[0][0]
 
 	# Gets a list of unique descriptors for the templates associated with the video
-	cursor.execute("""SELECT DISTINCT DESCRIPTOR from TEMPLATEPATHS WHERE VIDEOID = (?)""", (current_video,))
-	descriptors = cursor.fetchall()
-	print(f"THESE ARE THE DESCRIPTORS I AM WORKING WITH {descriptors}")
+	# cursor.execute("""SELECT * FROM TEMPLATEPATHS GROUP BY DESCRIPTOR""")
+	cursor.execute("""SELECT DISTINCT DESCRIPTOR, TEMPLATEID, TEMPLATEPATH from TEMPLATEPATHS WHERE VIDEOID = (?)""", (current_video,))
+	unique_descriptors = cursor.fetchall()
+	print(f"THIS IS THE RESULT FROM QUERY {unique_descriptors}")
 
-	scanners = []
-	for descriptor in descriptors:
-		# Gets all the templates associated with the current descriptor
-		descriptor = descriptor[0]
-		cursor.execute("""SELECT TEMPLATEID from TEMPLATEPATHS WHERE VIDEOID = (?) AND DESCRIPTOR = (?)""",
-		               (current_video, descriptor))
-		templates = cursor.fetchall()
+	# Gets the template IDs for each template with the current descriptor and create objects for reference
+	current_templates = {}
 
-		# Gets the template IDs for each template with the current descriptor and create objects for reference
-		current_templates = []
-		for template in templates:
-			template_id = template[0]
-			current_template = Template(template_id, DATABASE_PATH)
-			current_templates.append(current_template)
-			print(current_templates)
+	for descriptor, template_id, template_path in unique_descriptors:
+		try:
+			current_templates[descriptor].append(template_path)
+		except KeyError:
+			current_templates[descriptor] = [template_path]
+	print(video)
+	print(current_templates)
 
-		scanner = ThreadedVideoScan(current_templates, video)
-		scanners.append(scanner)
-
-		scanner.start()
-
-	[i.join() for i in scanners]
-
-	final_output = []
-	for scans in scanners: final_output.extend(scans.output)
+	scanner = ThreadedVideoScan()
+	final_output = scanner.run(current_templates, video, .7)
 	final_output.sort(key=lambda x: x.time)
 
 	# Development Tools
@@ -122,13 +114,6 @@ def scan_video(yt_id, video_editor_class, specials=None):
 			f.write(str(save_list))
 
 	return edit_video(final_output, yt_id, video_editor_class, specials)
-
-
-def download_video(video_id):
-	if not os.path.exists(f"Videos/{video_id}.mp4"):
-		pass
-	else:
-		return
 
 
 def add_video(video_id):
@@ -154,7 +139,7 @@ def add_templates(path, descriptor):
 def export_videos(video_id, video_list):
 	if not os.path.exists(f"TemplateFiles/{video_id}"): os.makedirs(f"TemplateFiles/{video_id}")
 	for template_type in video_list:
-		safe_name = template_type.replace(" ", "").replace("<", "").replace(">", "").replace("\"", "") \
+		safe_name = template_type.replace(" ", "").replace("<", "").replace(">", "").replace("\"", "")\
 			.replace("/", "").replace("\\", "").replace("|", "").replace("?", "").replace("*", "")
 		template_storage_path = f"TemplateFiles/{video_id}/{safe_name}"
 
@@ -163,40 +148,49 @@ def export_videos(video_id, video_list):
 
 		os.makedirs(template_storage_path)
 
+		loaded_video = cv2.VideoCapture(f"VideoFiles/{video_id}.mp4")
+		print(f"VideoFiles/{video_id}.mp4")
+
 		for index, template_code in enumerate(video_list[template_type]):
+			print(template_code)
+			loaded_video.set(cv2.CAP_PROP_POS_FRAMES, template_code["currentFrame"] - 1)
+			is_image, frame = loaded_video.read()
+			template = frame[round(template_code["realRectY"]):
+			                 round(template_code["realRectY"] + template_code["rectangleHeight"]),
+			                 round(template_code["realRectX"]):
+			                 round(template_code["realRectX"] + template_code["rectangleWidth"])]
 			indiv_template_path = template_storage_path + f"/{index}.png"
+			cv2.imwrite(indiv_template_path, template)
 			add_templates(indiv_template_path, safe_name)
-			with open(indiv_template_path, 'wb') as f:
-				f.write(base64.b64decode(template_code))
 
 
-def put(data):
-	dict_data = json.loads(data.replace(r'\x3E', '\x3E'))
+def put(request):
+	dict_data = json.loads(request.replace(r'\x3E', '\x3E'))
 	video_editor = VanillaEditor
 	if dict_data["conditionals"]:
 		print(dict_data["conditionals"])
 		print("PUNISHMENT MODULE COMPONENTS DETECTED: EDITING WITH CONDITIONAL VIDEO EDITOR")
 		video_editor = ConditionalEditor
-	download_video(None)
 	add_video(dict_data["videoID"])
 	export_videos(dict_data["videoID"], dict_data["templates"])
 
 	class EditThread(Thread):
 		def __init__(self):
 			Thread.__init__(self)
+			self.output = None
 
 		def run(self):
 			value = scan_video(dict_data["videoID"], video_editor, dict_data["conditionals"])
 			value = value.decode()[8:].replace("\"", "").replace("{", "").replace("}", "")
-			print(
-				f'https://tarheelgameplay.org/play/?key={value}'
-			)
+			self.output = f'https://tarheelgameplay.org/play/?key={value}'
 
 	editor = EditThread()
 	editor.start()
-	return {"TEMPLATES": "ADDED"}
+	editor.join()
+	return editor.output
 
 
 non_json = sys.argv[1]
-put(non_json)
-
+url = put(non_json)
+print(url)
+print("DONE")
