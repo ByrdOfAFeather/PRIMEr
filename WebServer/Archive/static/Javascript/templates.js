@@ -68,7 +68,7 @@ function exportTemplate() {
         function (canvas) {
             if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
 
-            if (document.getElementById(currentTemplateType.toLowerCase())) {
+            if (document.getElementById(currentTemplateType.toLowerCase()).classList[0] === "conditional-action-type") {
                 conditionals[currentTemplateType] = [];
                 conditionals[currentTemplateType].push(currentTime);
             }

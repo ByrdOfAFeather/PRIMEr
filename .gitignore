@@ -109,10 +109,10 @@ node_modules
 
 
 
-/SideScrollers/VideoProcessing/Sources
-/SideScrollers/VideoProcessing/Output
-/SideScrollers/VideoProcessing/Results
-/WebClientSide/public/videos
+VideoProcessing/Sources
+VideoProcessing/Output
+VideoProcessing/Results
+WebServer/public/videos
 /ResourceCreation/
 /WebClientSide/static/Javascript/html2canvas.js
 TODO.txt
