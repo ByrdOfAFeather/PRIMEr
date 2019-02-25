@@ -36,7 +36,7 @@ function exportTemplate() {
     let rectangleWidth = parseInt(rectangle.style.width, 10);
     rectangle.style.border = "none";
 
-    let canvas = document.getElementById("test-canvas");
+    let canvas = document.getElementById("output-screengrab");
     let ctx = canvas.getContext("2d");
     let v = document.getElementById("output-screengrab");
 
@@ -105,7 +105,7 @@ function grabScreen() {
     let videoHeight = video.videoHeight
     let videoWidth = video.videoWidth;
 
-    let canvas = document.getElementById("test-canvas");
+    let canvas = document.getElementById("output-screengrab");
     let ctx = canvas.getContext("2d");
 
     // CREDIT

@@ -5,26 +5,7 @@ let conditionals = {};
 let currentTime = null;
 let templatesShowing = false;
 let templateTable = document.getElementById("template-table");
-
-// CREDIT (Inspired from)
-// Kaiido
-// https://stackoverflow.com/a/41195171/8448827
-function screenshot(element, options = {}, set_id=false) {
-    let cropper = document.createElement('canvas').getContext('2d');
-    if (set_id) {
-        cropper.canvas.id = "output-screengrab";
-    }
-
-    let finalWidth = options.width;
-    let finalHeight = options.height;
-
-    return html2canvas(element, options).then(c => {
-        cropper.canvas.width = finalWidth;
-        cropper.canvas.height = finalHeight;
-        cropper.drawImage(c, 0, 0);
-        return cropper.canvas;
-    });
-}
+let videoID = "";
 
 function exportTemplate() {
     let container = getPreviousRectangle();
@@ -36,111 +17,75 @@ function exportTemplate() {
     let rectangleWidth = parseInt(rectangle.style.width, 10);
     rectangle.style.border = "none";
 
-    let canvas = document.getElementById("test-canvas");
+    let canvas = document.createElement("canvas");
     let ctx = canvas.getContext("2d");
     let v = document.getElementById("output-screengrab");
 
+    canvas.width = rectangleWidth;
+    canvas.height = rectangleHeight;
+    canvas.style.height = rectangleHeight + "px";
+    canvas.style.width = rectangleWidth + "px";
 
-    // CREDIT
-    // Brain Mayo
-    // https://dev.to/protium/javascript-rendering-videos-with-html2canvas-3bk
-    let w = v.width;
-    let h = v.height;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(v, 0, 0, w, h);
-    v.style.backgroundImage = `url(${canvas.toDataURL()})`;
-    canvas.height = 0;
-    canvas.width = 0;
-    v.style.backgroundSize = 'cover';
-    ctx.clearRect(0, 0, w, h);
-    // END CREDIT
+    let position = $("#output-screengrab").offset();
 
-    screenshot(document.body, {
-        x: rectangleX,
-        y: rectangleY,
-        width: rectangleWidth,
-        height: rectangleHeight,
-        useCORS: true,
-        allowTaint: true
-    }).then(
-        function (canvas) {
-            if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
+    ctx.fillRect(0, 0, rectangleWidth, rectangleHeight);
+    console.log(rectangleX - position["left"]);
+    console.log(rectangleY);
+    ctx.drawImage(v, rectangleX - position["left"], rectangleY - position["top"], rectangleWidth , rectangleHeight, 0, 0, rectangleWidth, rectangleHeight);
 
-            if (document.getElementById(currentTemplateType.toLowerCase())) {
-                conditionals[currentTemplateType] = [];
-                conditionals[currentTemplateType].push(currentTime);
-            }
+    if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
 
-            else {
-                let image = canvas.toDataURL();
-                let modImage = image.slice(22);
-                try {
-                    actionTemplateDict[currentTemplateType].push(modImage);
-                }
-                catch (TypeError) {
-                    actionTemplateDict[currentTemplateType] = [];
-                    actionTemplateDict[currentTemplateType].push(modImage);
-                }
-                finally {
-                    let templateTableRow = document.getElementById(currentTemplateType + "-table");
-                    let templatesAlreadyAdded = document.getElementsByClassName(currentTemplateType + "-data").length;
-                    let newTemplate = document.createElement("td");
-                    newTemplate.id = currentTemplateType + "-" + templatesAlreadyAdded;
-                    newTemplate.className = currentTemplateType + "-data";
-                    newTemplate.appendChild(canvas);
-                    templateTableRow.appendChild(newTemplate);
-                }
-            }
+    if (document.getElementById(currentTemplateType.toLowerCase()).classList[0] === "conditional-action-type") {
+        conditionals[currentTemplateType] = [];
+        conditionals[currentTemplateType].push(currentTime);
+    }
+
+    else {
+        try {
+            actionTemplateDict[currentTemplateType].push("NONE");
         }
-    )
+        catch (TypeError) {
+            actionTemplateDict[currentTemplateType] = [];
+            actionTemplateDict[currentTemplateType].push("NONE");
+        }
+        finally {
+            let templateTableRow = document.getElementById(currentTemplateType + "-table");
+            let templatesAlreadyAdded = document.getElementsByClassName(currentTemplateType + "-data").length;
+            let newTemplate = document.createElement("td");
+            newTemplate.id = currentTemplateType + "-" + templatesAlreadyAdded;
+            newTemplate.className = currentTemplateType + "-data";
+            newTemplate.appendChild(canvas);
+            templateTableRow.appendChild(newTemplate);
+        }
+    }
 }
 
 function grabScreen() {
     let video = document.getElementById('current-video');
 
-    let videoX = video.offsetLeft;
-    let videoY = video.offsetTop;
-    let videoHeight = video.videoHeight
+    let videoHeight = video.videoHeight;
     let videoWidth = video.videoWidth;
 
-    let canvas = document.getElementById("test-canvas");
+    let canvas = document.getElementById("output-screengrab");
     let ctx = canvas.getContext("2d");
 
-    // CREDIT
-    // Brain Mayo
-    // https://dev.to/protium/javascript-rendering-videos-with-html2canvas-3bk
     canvas.width = videoWidth;
     canvas.height = videoHeight;
+    canvas.style.width = videoWidth + "px";
+    canvas.style.height = videoHeight + "px";
+
     ctx.fillRect(0, 0, videoWidth, videoHeight);
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-    video.style.backgroundImage = `url(${canvas.toDataURL()})`;
-    canvas.height = 0;
-    canvas.width = 0;
-    video.style.backgroundSize = 'cover';
-    ctx.clearRect(0, 0, videoWidth, videoHeight);
-    // END CREDIT
 
-    console.log(document.readyState === "complete");
-    screenshot(document.body, {
-        x: videoX,
-        y: videoY,
-        width: videoWidth,
-        height: videoHeight,
-        useCORS: true
-    }, true).then(
-        function (canvas) {
-            currentTime = document.getElementById("current-video").currentTime;
-            let currentScreenCap = document.getElementById("output-screengrab");
-            if (currentScreenCap) {
-                currentScreenCap.parentNode.removeChild(currentScreenCap);
-            }
-            let screengrabContainer = document.getElementById("screengrab-container");
-            screengrabContainer.appendChild(canvas);
-            initDraw(screengrabContainer);
-        }
-    )
+    currentTime = document.getElementById("current-video").currentTime;
+    let currentScreenCap = document.getElementById("output-screengrab");
+    if (currentScreenCap) {
+        currentScreenCap.parentNode.removeChild(currentScreenCap);
+    }
+    let screengrabContainer = document.getElementById("screengrab-container");
+    screengrabContainer.appendChild(canvas);
+    initDraw(screengrabContainer);
+
 }
 
 function setCurrentTemplateType(clickEvent) {
@@ -246,8 +191,46 @@ function loadVideo() {
     else {
         let linkID = link.slice(32);
         currentVideo = linkID;
+        console.log(linkID);
+        $.ajax({
+            url: 'https://eywbadb872.execute-api.eu-west-1.amazonaws.com/prod?video_id=' + linkID,
+            method: 'get',
+            success : function (results) {
+                // This never happens as the query is treated as a failure
+            },
+            error : function(results) {
+                if (results.status === 0) {
+                    alert("Somehow the server isn't running?");
+                }
+                else {
+                    let potentialLinks = results.responseText;
+                    console.log(potentialLinks);
+                    potentialLinks = potentialLinks.split("https");
+                    console.log(potentialLinks);
+                    let newPotentialLinks = [];
+                    for (let i = 0; i < potentialLinks.length; i++) {
+                        let links = potentialLinks[i];
+                        links = decodeURIComponent(links);
+                        console.log(links);
+                        console.log(links.includes("mime=video"));
+                        if (links.includes("mime=video%2Fmp4")) {
+                            let addedLinkArray = links.split(("\""));
+                            let addedLink = addedLinkArray[0];
+                            addedLink = addedLink.replace(/\\u[\dA-F]{4}/gi,
+                                function (match) {
+                                    return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
+                                });
+                            addedLink = "https" + addedLink;
+                            newPotentialLinks.push(addedLink);
+                        }
+                    }
+                    document.getElementById("current-video").load();
+                    document.getElementById("current-video-source").src = newPotentialLinks[0];
+                    console.log(newPotentialLinks);
+                }
+            }
+        });
     }
-    displayNewVideo(link);
 }
 
 window.onclick = function(event) {

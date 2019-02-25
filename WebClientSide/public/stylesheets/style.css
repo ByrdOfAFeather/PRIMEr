@@ -23,7 +23,15 @@ html, body {
     text-align: center;
 }
 
-#test-canvas {
+#output-screengrab {
+    display: table; align-content: center;
+    width:0px;
+    height:0px;
+    background-color: white;
+}
+
+#template-area {
+    display: table; align-content: center;
     width:0px;
     height:0px;
     background-color: white;

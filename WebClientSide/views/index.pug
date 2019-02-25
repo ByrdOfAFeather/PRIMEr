@@ -1,3 +1,4 @@
+- var videoInput = true;
 doctype html
 head
   link(rel='stylesheet' href='stylesheets/style.css')
@@ -9,9 +10,16 @@ label#input-video-label.tar-heel-label(for='input-video')
   button#input-video-button.tar-heel-button(onclick='loadVideo();') Load
 // - Loads the video -
 #video-container
-  video#current-video(controls='controls')
-    source(src='videos/ylbwTpMhZ3k.mp4')
-  canvas#test-canvas
+  case videoInput
+    when true
+      video#current-video(
+      preload="auto"
+      controls
+      )
+        source#current-video-source(src='')
+      canvas#output-screengrab
+    default
+      canvas#output-screengrab
 #screengrab-container(style='')
 // - Adds templates to the database -
 #button-options
@@ -37,8 +45,12 @@ label#input-video-label.tar-heel-label(for='input-video')
   button#grab-screen-button.tar-heel-button.drop-down(onclick='grabScreen();')
     | Capture Current Screen
   button#finish-button.tar-heel-button(onclick='finish();') Finish
+#template-write
+    canvas#template-area
 // - Scripts for rectangles -
 script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js')
 script(src='javascripts/selectors.js')
 script(src='javascripts/templates.js')
+script(src="https://vjs.zencdn.net/7.3.0/video.min.js")
+link(href="https://vjs.zencdn.net/7.3.0/video-js.min.css" rel="stylesheet")
 script(src='https://html2canvas.hertzen.com/dist/html2canvas.min.js')

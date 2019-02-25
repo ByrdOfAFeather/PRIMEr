@@ -205,10 +205,12 @@ class ConditionalEditor(_VideoEditor):
 
 		# this is used to make multiple "Continue" choices near the punishment timestamp so that they can point to
 		# different points in the video. (This is needed so the video can go right back to where a mistake was made)
-		self.punishment_offset += .2
+		# self.punishment_offset += .2
 
 		descriptor_tracker = []
-		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
+		# incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
+		incorrect_time = self.specials["Punishment"]
+
 		for nearby_time in nearest_times[1:]:
 			if nearby_time.marker not in descriptor_tracker:
 				choices.append(
@@ -225,15 +227,15 @@ class ConditionalEditor(_VideoEditor):
 				"time": round(self.timestamps[index_of_timestamps].time.total_seconds(), 2),
 				"choices": choices
 			},
-			{
-				"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 2),
-				"choices": [
-					{
-						"prompt": "Continue",
-						"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 2)
-					}
-				]
-			}
+			# {
+			# 	"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 2),
+			# 	"choices": [
+			# 		{
+			# 			"prompt": "Continue",
+			# 			"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 2)
+			# 		}
+			# 	]
+			# }
 		]
 
 	def edit(self):
@@ -241,7 +243,7 @@ class ConditionalEditor(_VideoEditor):
 
 		# This time point is so that the player can skip over the punishment "Continues" while playing through the video
 		edits["timePoints"].append({
-				"time": round(self.specials["Punishment"] - self.punishment_offset + self.punishment_length - .2, 1),
+				"time": round(self.specials["Punishment"] - .2, 1),
 				"choices": [
 					{
 						"prompt": "Continue",
@@ -249,6 +251,16 @@ class ConditionalEditor(_VideoEditor):
 							self.specials["Punishment"] + 2,
 							1
 						)
+					}
+				]
+			}
+		)
+		edits["timePoints"].append({
+				"time": self.specials["Punishment"] + self.punishment_length,
+				"choices": [
+					{
+						"prompt": "Continue",
+						"next": 0.0
 					}
 				]
 			}

@@ -8,6 +8,8 @@ let previous_rectangle = null;
 let canDraw = false;
 
 function initDraw(canvas) {
+    console.log("I got here and this is the current canvas I'm working with");
+    console.log(canvas);
 
     var mouse = {
         x: 0,
@@ -37,7 +39,9 @@ function initDraw(canvas) {
         }
     };
 
+
     canvas.onclick = function (_) {
+        console.log("THANKS FOR CLICKING ON ME!");
         let current_video = document.getElementById("output-screengrab");
         if (_.target !== current_video && element === null) {}
         else if (element !== null) {

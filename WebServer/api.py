@@ -1,3 +1,6 @@
+###
+# TODO: Allow api to take in coordinates rather than images 
+###
 from flask import Flask, request
 from flask_restful import Resource, Api
 from database import DATABASE_PATH

@@ -23,7 +23,7 @@ html, body {
     text-align: center;
 }
 
-#test-canvas {
+#output-screengrab {
     width:0px;
     height:0px;
     background-color: white;
