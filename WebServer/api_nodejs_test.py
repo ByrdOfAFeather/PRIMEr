@@ -1,15 +1,11 @@
-###
-# TODO: Allow api to take in coordinates rather than images
-###
-from flask import Flask, request
-from flask_restful import Resource, Api
+import sys
+sys.path.append("..")
 from database import DATABASE_PATH
 from SideScrollers.VideoProcessing.TemplateScanners import ThreadedVideoScan
 from SideScrollers.VideoProcessing.Template import Template
 from SideScrollers.VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
 from SideScrollers.VideoProcessing.Timestamp import Timestamp
 from threading import Thread
-import cv2
 import os
 import sqlite3 as sql
 import json
@@ -17,22 +13,6 @@ import urllib
 import base64
 import shutil
 import datetime
-
-
-# Set up the server and api
-primer_server = Flask(__name__)
-primer_server.config["DEBUG"] = True
-primer_api = Api(primer_server)
-template_dictionary = {}
-
-
-# Allows for requests to be made from domains not hosted on the server
-@primer_server.after_request
-def after_request(response):
-	response.headers.add('Access-Control-Allow-Origin', '*')
-	response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-	response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-	return response
 
 
 # Generic function to parse lists into a sql readable format
@@ -144,88 +124,79 @@ def scan_video(yt_id, video_editor_class, specials=None):
 	return edit_video(final_output, yt_id, video_editor_class, specials)
 
 
-class StartEditEndPoint(Resource):
-	def __init__(self):
-		Resource.__init__(self)
-
-	@staticmethod
-	def download_video(video_id):
-		if not os.path.exists(f"Videos/{video_id}.mp4"):
-			pass
-		else:
-			return
-
-	@staticmethod
-	def add_video(video_id):
-		db = sql.connect("pathDB.db")
-		cursor = db.cursor()
-		cursor.execute("""INSERT INTO VIDEOPATHS (VIDEOPATH) VALUES (?)""",
-		               (f"VideoFiles/{video_id}.mp4",))
-		db.commit()
-		db.close()
-
-	@staticmethod
-	def add_templates(path, descriptor):
-		db = sql.connect("pathDB.db")
-		cursor = db.cursor()
-		cursor.execute("""SELECT MAX(VIDEOID) from VIDEOPATHS""")
-		video_id = cursor.fetchall()[0][0]
-		cursor.execute("""INSERT INTO TEMPLATEPATHS (TEMPLATEPATH, VIDEOID, DESCRIPTOR) VALUES (?, ?, ?)""",
-		               (path, video_id, descriptor))
-		db.commit()
-		db.close()
-
-	def export_videos(self, video_id, video_list):
-		if not os.path.exists(f"TemplateFiles/{video_id}"): os.makedirs(f"TemplateFiles/{video_id}")
-		for template_type in video_list:
-			safe_name = template_type.replace(" ", "").replace("<", "").replace(">", "").replace("\"", "")\
-				.replace("/", "").replace("\\", "").replace("|", "").replace("?", "").replace("*", "")
-			template_storage_path = f"TemplateFiles/{video_id}/{safe_name}"
-
-			if os.path.exists(template_storage_path):
-				shutil.rmtree(template_storage_path, ignore_errors=True)
-
-			os.makedirs(template_storage_path)
-
-			for index, template_code in enumerate(video_list[template_type]):
-				indiv_template_path = template_storage_path + f"/{index}.png"
-				self.add_templates(indiv_template_path, safe_name)
-				with open(indiv_template_path, 'wb') as f:
-					f.write(base64.b64decode(template_code))
-
-	def put(self):
-		raw_data = request.form["data"]
-		dict_data = json.loads(raw_data.replace(r'\x3E', '\x3E'))
-		video_editor = VanillaEditor
-		if dict_data["conditionals"]:
-			print(dict_data["conditionals"])
-			print("PUNISHMENT MODULE COMPONENTS DETECTED: EDITING WITH CONDITIONAL VIDEO EDITOR")
-			video_editor = ConditionalEditor
-		self.download_video()
-		self.add_video(dict_data["videoID"])
-		self.export_videos(dict_data["videoID"], dict_data["templates"])
-
-		class EditThread(Thread):
-			def __init__(self):
-				Thread.__init__(self)
-
-			def run(self):
-				value = scan_video(dict_data["videoID"], video_editor, dict_data["conditionals"])
-				value = value.decode()[8:].replace("\"", "").replace("{", "").replace("}", "")
-				print(
-					f'https://tarheelgameplay.org/play/?key={value}'
-				)
-
-		editor = EditThread()
-		editor.start()
-		return {"TEMPLATES": "ADDED"}
+def download_video(video_id):
+	if not os.path.exists(f"Videos/{video_id}.mp4"):
+		pass
+	else:
+		return
 
 
-primer_api.add_resource(StartEditEndPoint, "/api/startedit/")
+def add_video(video_id):
+	db = sql.connect("pathDB.db")
+	cursor = db.cursor()
+	cursor.execute("""INSERT INTO VIDEOPATHS (VIDEOPATH) VALUES (?)""",
+	               (f"VideoFiles/{video_id}.mp4",))
+	db.commit()
+	db.close()
 
 
-def run():
-	primer_server.run(port=5001)
+def add_templates(path, descriptor):
+	db = sql.connect("pathDB.db")
+	cursor = db.cursor()
+	cursor.execute("""SELECT MAX(VIDEOID) from VIDEOPATHS""")
+	video_id = cursor.fetchall()[0][0]
+	cursor.execute("""INSERT INTO TEMPLATEPATHS (TEMPLATEPATH, VIDEOID, DESCRIPTOR) VALUES (?, ?, ?)""",
+	               (path, video_id, descriptor))
+	db.commit()
+	db.close()
 
 
-if __name__ == "__main__": run()
+def export_videos(video_id, video_list):
+	if not os.path.exists(f"TemplateFiles/{video_id}"): os.makedirs(f"TemplateFiles/{video_id}")
+	for template_type in video_list:
+		safe_name = template_type.replace(" ", "").replace("<", "").replace(">", "").replace("\"", "") \
+			.replace("/", "").replace("\\", "").replace("|", "").replace("?", "").replace("*", "")
+		template_storage_path = f"TemplateFiles/{video_id}/{safe_name}"
+
+		if os.path.exists(template_storage_path):
+			shutil.rmtree(template_storage_path, ignore_errors=True)
+
+		os.makedirs(template_storage_path)
+
+		for index, template_code in enumerate(video_list[template_type]):
+			indiv_template_path = template_storage_path + f"/{index}.png"
+			add_templates(indiv_template_path, safe_name)
+			with open(indiv_template_path, 'wb') as f:
+				f.write(base64.b64decode(template_code))
+
+
+def put(data):
+	dict_data = json.loads(data.replace(r'\x3E', '\x3E'))
+	video_editor = VanillaEditor
+	if dict_data["conditionals"]:
+		print(dict_data["conditionals"])
+		print("PUNISHMENT MODULE COMPONENTS DETECTED: EDITING WITH CONDITIONAL VIDEO EDITOR")
+		video_editor = ConditionalEditor
+	download_video(None)
+	add_video(dict_data["videoID"])
+	export_videos(dict_data["videoID"], dict_data["templates"])
+
+	class EditThread(Thread):
+		def __init__(self):
+			Thread.__init__(self)
+
+		def run(self):
+			value = scan_video(dict_data["videoID"], video_editor, dict_data["conditionals"])
+			value = value.decode()[8:].replace("\"", "").replace("{", "").replace("}", "")
+			print(
+				f'https://tarheelgameplay.org/play/?key={value}'
+			)
+
+	editor = EditThread()
+	editor.start()
+	return {"TEMPLATES": "ADDED"}
+
+
+non_json = sys.argv[1]
+put(non_json)
+

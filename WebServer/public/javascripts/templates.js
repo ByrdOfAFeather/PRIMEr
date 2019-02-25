@@ -41,12 +41,14 @@ function exportTemplate() {
     }
 
     else {
+        realRectX = rectangleX - position["left"];
+        realRectY = rectangleY - position["top"];
         try {
-            actionTemplateDict[currentTemplateType].push("NONE");
+            actionTemplateDict[currentTemplateType].push({realRectX, realRectY, rectangleHeight, rectangleWidth});
         }
         catch (TypeError) {
             actionTemplateDict[currentTemplateType] = [];
-            actionTemplateDict[currentTemplateType].push("NONE");
+            actionTemplateDict[currentTemplateType].push({realRectX, realRectY, rectangleHeight, rectangleWidth});
         }
         finally {
             let templateTableRow = document.getElementById(currentTemplateType + "-table");
@@ -63,8 +65,8 @@ function exportTemplate() {
 function grabScreen() {
     let video = document.getElementById('current-video');
 
-    let videoHeight = video.videoHeight;
-    let videoWidth = video.videoWidth;
+    let videoHeight = video.offsetHeight;
+    let videoWidth = video.offsetWidth;
 
     let canvas = document.getElementById("output-screengrab");
     let ctx = canvas.getContext("2d");
@@ -225,7 +227,7 @@ function loadVideo() {
                         }
                     }
                     document.getElementById("current-video").load();
-                    document.getElementById("current-video-source").src = newPotentialLinks[0];
+                    document.getElementById("current-video-source").src = newPotentialLinks[3];
                     console.log(newPotentialLinks);
                 }
             }
@@ -261,7 +263,8 @@ function finish() {
     let json = JSON.stringify(data);
     console.log(json);
     $.ajax({
-        url: 'http://127.0.0.1:5001/api/startedit/',
+        // url: 'http://127.0.0.1:5001/api/startedit/',
+        url: 'http://127.0.0.1:3000/api/',
         method: 'PUT',
         dataType: 'json',
         data: {

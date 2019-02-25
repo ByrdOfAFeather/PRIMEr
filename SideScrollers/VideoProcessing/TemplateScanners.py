@@ -1,6 +1,5 @@
 from SideScrollers.VideoProcessing.Timestamp import Timestamp
 from threading import Thread
-import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 import cv2
@@ -26,24 +25,6 @@ class TemplateScanner:
 		self.cur_results = None
 		self.template_list = self._build_image_list(*self.template_list)
 
-	def plot_template_match(self, image, template_results, title="Template Matching result", output_title="TEST"):
-		"""Plots the image with the rectangle put on top of it. (Inspired from: https://docs.opencv.org/3.4.3/d4/dc6/tutorial_py_template_matching.html)
-		:param image: A numpy representation of a image
-		:param template_results: The results of running the template inside of cv2's matching method
-		:param title: The desired title of the graph
-		:param output_title: the template for outputting files with different names
-		:return: None
-		"""
-		h, w = self.cur_best_template.shape[:-1]
-		min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(template_results)
-		top_left = max_loc
-		bottom_right = (top_left[0] + w, top_left[1] + h)
-
-		cv2.rectangle(image, top_left, bottom_right, 255, 10)
-		plt.title(title)
-		plt.xticks([]), plt.yticks([])
-		plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-		plt.savefig(f"Output/{output_title}.png")
 
 	@staticmethod
 	def _match_template(image, template, filter_process):
@@ -241,10 +222,7 @@ class VideoScanner(TemplateScanner):
 					index_of_positive = [index for index, value in enumerate(slider) if value == 1][0]
 					self.scan([image_slider[index_of_positive]])
 
-					if save_frames:
-						self.plot_template_match(image_slider[index_of_positive], self.cur_results[0],
-						                         output_title=f"{output_generic}{frame_counter}")
-
+					if save_frames: pass
 					skip_index = 0
 				frame_counter += 1
 
@@ -383,9 +361,6 @@ class _VideoThreader(Thread, TemplateScanner):
 
 					if self.output_frames:
 						frame_count = video.get(cv2.CAP_PROP_POS_FRAMES)
-
-						self.plot_template_match(image_slider[index_of_positive], self.cur_results[0],
-						                         output_title=f"{self.output_generic}{frame_count}")
 
 					skip_index = 0
 				frame += 1
