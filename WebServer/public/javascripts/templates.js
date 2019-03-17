@@ -6,6 +6,8 @@ let currentTime = null;
 let templatesShowing = false;
 let templateTable = document.getElementById("template-table");
 let videoID = "";
+let orgVideoWidth;
+let orgVideoHeight;
 
 function exportTemplate() {
     let container = getPreviousRectangle();
@@ -72,10 +74,19 @@ function exportTemplate() {
 }
 
 function grabScreen() {
+    let videoWidth;
+    let videoHeight;
     let video = document.getElementById('current-video');
 
-    let videoHeight = video.offsetHeight;
-    let videoWidth = video.offsetWidth;
+    if (video.videoWidth / video.videoHeight !== 16/9) {
+        console.log("LOOKS LIKE THE VIDEO IS NOT IN A FORM OF 16:9!");
+        videoHeight = video.videoHeight;
+        videoWidth = video.videoWidth;
+    }
+    else {
+        videoHeight = video.offsetHeight;
+        videoWidth = video.offsetWidth;
+    }
 
     let canvas = document.getElementById("output-screengrab");
     let ctx = canvas.getContext("2d");
@@ -207,7 +218,7 @@ function loadVideo() {
             url: 'https://eywbadb872.execute-api.eu-west-1.amazonaws.com/prod?video_id=' + linkID,
             method: 'get',
             success : function (results) {
-                // This never happens as the query is treated as a failure
+                // This is not actually ever used
             },
             error : function(results) {
                 if (results.status === 0) {
@@ -235,8 +246,13 @@ function loadVideo() {
                             newPotentialLinks.push(addedLink);
                         }
                     }
-                    document.getElementById("current-video").load();
+                    let video = document.getElementById("current-video");
                     document.getElementById("current-video-source").src = newPotentialLinks[3];
+                    video.load();
+                    orgVideoHeight = video.videoHeight;
+                    orgVideoWidth  = video.videoWidth;
+                    video.style.height = "360px";
+                    video.style.width = "640px";
                     console.log(newPotentialLinks);
                 }
             }
@@ -271,6 +287,7 @@ function finish() {
     data["videoID"] = currentVideo;
     let json = JSON.stringify(data);
     console.log(json);
+    alert("Your video is now being processed! This could take a while.");
     $.ajax({
         // url: 'http://127.0.0.1:5001/api/startedit/',
         url: 'http://127.0.0.1:3000/api/',
@@ -280,7 +297,8 @@ function finish() {
             data: json
         },
         success : function (results) {
-            alert("Your video is now being processed! This could take a while.");
+            alert(results["link"]);
+            console.log(results);
         },
         error : function(results) {
             if (results.status === 0) {
@@ -290,6 +308,7 @@ function finish() {
                 alert("Something went wrong! Make sure you have added action templates!");
                 console.log(results);
             }
-        }
+        },
+        timeout: 0
     });
 }

@@ -104,7 +104,7 @@ def scan_video(yt_id, video_editor_class, specials=None):
 	print(current_templates)
 
 	scanner = ThreadedVideoScan()
-	final_output = scanner.run(current_templates, video, .7)
+	final_output = scanner.run(current_templates, video, .6)
 	final_output.sort(key=lambda x: x.time)
 
 	# Development Tools
