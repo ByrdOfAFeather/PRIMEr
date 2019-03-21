@@ -152,8 +152,10 @@ def export_videos(video_id, video_list):
 		print(f"VideoFiles/{video_id}.mp4")
 
 		for index, template_code in enumerate(video_list[template_type]):
+			frame_rate = loaded_video.get(cv2.CAP_PROP_FPS)
+			template_code["currentFrame"] = template_code["currentFrame"] * frame_rate
 			print(template_code)
-			loaded_video.set(cv2.CAP_PROP_POS_FRAMES, template_code["currentFrame"] - 1)
+			loaded_video.set(cv2.CAP_PROP_POS_FRAMES, template_code["currentFrame"])
 			is_image, frame = loaded_video.read()
 			template = frame[round(template_code["realRectY"]):
 			                 round(template_code["realRectY"] + template_code["rectangleHeight"]),
@@ -161,6 +163,7 @@ def export_videos(video_id, video_list):
 			                 round(template_code["realRectX"] + template_code["rectangleWidth"])]
 			indiv_template_path = template_storage_path + f"/{index}.png"
 			cv2.imwrite(indiv_template_path, template)
+			cv2.imwrite(indiv_template_path + f'{loaded_video.get(cv2.CAP_PROP_POS_FRAMES)}.png', frame)
 			add_templates(indiv_template_path, safe_name)
 
 

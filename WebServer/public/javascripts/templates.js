@@ -9,6 +9,11 @@ let videoID = "";
 let orgVideoWidth;
 let orgVideoHeight;
 
+let video = document.getElementById("current-video");
+video.onpause = function() {
+    grabScreen();
+};
+
 function exportTemplate() {
     let container = getPreviousRectangle();
 
@@ -31,8 +36,6 @@ function exportTemplate() {
     let position = $("#output-screengrab").offset();
 
     ctx.fillRect(0, 0, rectangleWidth, rectangleHeight);
-    console.log(rectangleX - position["left"]);
-    console.log(rectangleY);
     ctx.drawImage(v, rectangleX - position["left"], rectangleY - position["top"], rectangleWidth , rectangleHeight, 0, 0, rectangleWidth, rectangleHeight);
 
     if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
@@ -45,7 +48,7 @@ function exportTemplate() {
     else {
         realRectX = rectangleX - position["left"];
         realRectY = rectangleY - position["top"];
-        let currentFrame = currentTime * 30;
+        let currentFrame = currentTime;
         try {
             actionTemplateDict[currentTemplateType].push({realRectX,
                 realRectY,
@@ -68,6 +71,15 @@ function exportTemplate() {
             newTemplate.id = currentTemplateType + "-" + templatesAlreadyAdded;
             newTemplate.className = currentTemplateType + "-data";
             newTemplate.appendChild(canvas);
+            let templateImage = document.createElement("img");
+            templateImage.className = "delete-button";
+            templateImage.src = "http://i.imgur.com/TWLiACv.png";
+            templateImage.alt = "delete";
+            templateImage.onclick = function (event) {
+                event.preventDefault();
+                deleteTemplate(event, true);
+            };
+            newTemplate.appendChild(templateImage);
             templateTableRow.appendChild(newTemplate);
         }
     }
@@ -79,7 +91,6 @@ function grabScreen() {
     let video = document.getElementById('current-video');
 
     if (video.videoWidth / video.videoHeight !== 16/9) {
-        console.log("LOOKS LIKE THE VIDEO IS NOT IN A FORM OF 16:9!");
         videoHeight = video.videoHeight;
         videoWidth = video.videoWidth;
     }
@@ -129,15 +140,29 @@ function setCurrentTemplateType(clickEvent) {
     }
 }
 
-function deleteTemplate(event) {
-    let currentActionTypeToDeleteNode = event.target.parentNode;
-    if (currentActionTypeToDeleteNode.classList[0] === "conditional-action-type") {
-        delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
-        actionTemplateDict[currentActionTypeToDeleteNode] = [];
+function deleteTemplate(event, deleteList=false) {
+
+    if (deleteList) {
+        let name = event.target.parentNode.id;
+        name = name.split("-");
+        let template = name[0];
+        let index = name[1] + 1;
+        let tableRow = document.getElementById(template + "-table");
+        tableRow.deleteCell(index);
+        actionTemplateDict[template].splice(index - 1, 1);
     }
+
     else {
-        document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDeleteNode);
-        delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
+        let currentActionTypeToDeleteNode = event.target.parentNode;
+        if (currentActionTypeToDeleteNode.classList[0] === "conditional-action-type") {
+            delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
+            actionTemplateDict[currentActionTypeToDeleteNode] = [];
+        } else {
+            document.getElementById("template-drop-down-contents").removeChild(currentActionTypeToDeleteNode);
+            let table = document.getElementById(currentActionTypeToDeleteNode.innerText + "-table");
+            table.parentElement.removeChild(table);
+            delete actionTemplateDict[currentActionTypeToDeleteNode.innerText];
+        }
     }
 }
 
@@ -162,7 +187,7 @@ function addNewTemplate() {
 
         let templateImage = document.createElement("img");
         templateImage.className = "delete-button";
-        templateImage.src = "../static/Resources/deletebutton.png";
+        templateImage.src = "http://i.imgur.com/TWLiACv.png";
         templateImage.alt = "delete";
         templateImage.onclick = function (event) {
             event.preventDefault();
@@ -189,7 +214,6 @@ function showTemplates() {
 }
 
 function showDropDown(passedButton) {
-    console.log(passedButton.value);
     if (passedButton === document.getElementById("template-drop-down-button")) {
         document.getElementById("template-drop-down-contents").classList.toggle("show");
     }
@@ -199,12 +223,37 @@ function showDropDown(passedButton) {
     }
 }
 
-function displayNewVideo(link) {
-    // TODO: API CALL?
+// Heavily inspired by the code from : http://youtubescreenshot.com
+// The code on this site is documented nowhere and the source code is somewhat obfuscated.
+function decodeStreamMap(decodable) {
+    let potentialLinks = {};
+    let params = decodable.split(",");
+    for (let i = 0; i < params.length; i++) {
+        let current_link = decodeQueryString(params[i]);
+        let current_type = current_link["type"].split(";")[0];
+        let current_quality = current_link["quality"].split(",")[0];
+        current_link["original_url"] = current_link["url"];
+        current_link["url"] = "" + current_link["url"] + "&signature" + current_link["sig"];
+        potentialLinks["" + current_type + " " + current_quality] = current_link;
+    }
+    return potentialLinks
+}
+
+// Heavily inspired by the code from : http://youtubescreenshot.com
+// The code on this site is documented nowhere and the source code is heavily obfuscated.
+function decodeQueryString(decodeable) {
+    let params = decodeable.split("&");
+    let keyMap = {};
+    for (let i = 0; i < params.length; i++) {
+        let keyValues = params[i].split("=");
+        let key = decodeURIComponent(keyValues[0]);
+        let value = decodeURIComponent(keyValues[1]);
+        keyMap[key] = value;
+    }
+    return keyMap;
 }
 
 function loadVideo() {
-    console.log("I got here");
     let input = document.getElementById("input-video");
     let link = input.value;
     if (link.slice(0, 32) !== "https://www.youtube.com/watch?v=") {
@@ -213,49 +262,30 @@ function loadVideo() {
     else {
         let linkID = link.slice(32);
         currentVideo = linkID;
-        console.log(linkID);
         $.ajax({
             url: 'https://eywbadb872.execute-api.eu-west-1.amazonaws.com/prod?video_id=' + linkID,
-            method: 'get',
-            success : function (results) {
-                // This is not actually ever used
-            },
-            error : function(results) {
-                if (results.status === 0) {
-                    alert("Somehow the server isn't running?");
-                }
-                else {
-                    let potentialLinks = results.responseText;
-                    console.log(potentialLinks);
-                    potentialLinks = potentialLinks.split("https");
-                    console.log(potentialLinks);
-                    let newPotentialLinks = [];
-                    for (let i = 0; i < potentialLinks.length; i++) {
-                        let links = potentialLinks[i];
-                        links = decodeURIComponent(links);
-                        console.log(links);
-                        console.log(links.includes("mime=video"));
-                        if (links.includes("mime=video%2Fmp4")) {
-                            let addedLinkArray = links.split(("\""));
-                            let addedLink = addedLinkArray[0];
-                            addedLink = addedLink.replace(/\\u[\dA-F]{4}/gi,
-                                function (match) {
-                                    return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
-                                });
-                            addedLink = "https" + addedLink;
-                            newPotentialLinks.push(addedLink);
-                        }
-                    }
-                    let video = document.getElementById("current-video");
-                    document.getElementById("current-video-source").src = newPotentialLinks[3];
-                    video.load();
-                    orgVideoHeight = video.videoHeight;
-                    orgVideoWidth  = video.videoWidth;
-                    video.style.height = "360px";
-                    video.style.width = "640px";
-                    console.log(newPotentialLinks);
-                }
+            dataType: "text"
+        }).done(function(results) {
+            let correctLink;
+            let params = decodeQueryString(results);
+            let links = decodeStreamMap(params.url_encoded_fmt_stream_map);
+            if (links["video/mp4 hd720"] !== undefined) {
+                correctLink = links["video/mp4 hd720"]["url"];
             }
+            else if (links["video/mp4 medium"] !== undefined) {
+                correctLink = links["video/mp4 medium"]["url"];
+            }
+            else if (links["video/webm medium"] !== undefined) {
+                correctLink = links["video/webm medium"];
+            }
+
+            let video = document.getElementById("current-video");
+            document.getElementById("current-video-source").src = correctLink;
+            video.load();
+            orgVideoHeight = video.videoHeight;
+            orgVideoWidth = video.videoWidth;
+            video.style.height = "360px";
+            video.style.width = "640px";
         });
     }
 }
@@ -283,10 +313,8 @@ function finish() {
     let data = {};
     data["templates"] = actionTemplateDict;
     data["conditionals"] = conditionals;
-    console.log(data);
     data["videoID"] = currentVideo;
     let json = JSON.stringify(data);
-    console.log(json);
     alert("Your video is now being processed! This could take a while.");
     $.ajax({
         // url: 'http://127.0.0.1:5001/api/startedit/',
@@ -298,7 +326,6 @@ function finish() {
         },
         success : function (results) {
             alert(results["link"]);
-            console.log(results);
         },
         error : function(results) {
             if (results.status === 0) {

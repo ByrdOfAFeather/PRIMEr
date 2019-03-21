@@ -5,18 +5,17 @@ let fs = require("fs");
 let router = express.Router();
 
 
-/* GET home page. */
 router.put('/', function(req, res) {
     req.connection.setTimeout(120000*1000);
     let options = {
         mode: 'text',
         pythonPath: '/home/byrdofafeather/VirtualEnviroments/PRIMEr/bin/python3.7',
-        pythonOptions: ['-u'], // get print results in real-time
+        pythonOptions: ['-u'],
         args: [req.body["data"]]
     };
-    https://www.youtube.com/
-    let json = JSON.parse(req.body["data"]);
-    let videoID = json["videoID"];
+
+    let jsonData = JSON.parse(req.body["data"]);
+    let videoID = jsonData["videoID"];
     let path = "VideoFiles/" + videoID + ".mp4";
     if (fs.existsSync(path)) {
         console.log("VIDEO ALREADY DOWNLOADED!");
@@ -33,19 +32,19 @@ router.put('/', function(req, res) {
     }
 
     else {
-        let downloader = youtubeDL("https://www.youtube.com/watch?v=" + videoID, ['--format=135']);
+        let downloader = youtubeDL("https://www.youtube.com/watch?v=" + videoID, ['--format=18']);
 
         let size;
         downloader.on('info', function (info) {
             size = info.size;
             console.log('Download started');
-            console.log('filename: ' + info._filename);
         });
 
         downloader.pipe(fs.createWriteStream(path));
 
         let pos = 0;
         let progress = 0;
+        // Source: https://stackoverflow.com/questions/49185538/how-to-add-progress-bar
         downloader.on('data', (chunk) => {
             pos += chunk.length;
             if (size) {
