@@ -1,4 +1,5 @@
 import datetime
+import random as rand
 
 
 class _VideoEditor:
@@ -199,21 +200,33 @@ class ConditionalEditor(_VideoEditor):
 		# this is used to make multiple "Continue" choices near the punishment timestamp so that they can point to
 		# different points in the video. (This is needed so the video can go right back to where a mistake was made)
 		self.punishment_offset += .2
-		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
+		incorrect_time = round(self.specials["Punishment"], 1)
 
 		if len(nearest_times) == 1:
+			other_choice = []
+			while 1:
+				current_guess = self.timestamps[rand.randint(0, len(self.timestamps - 1))]
+				if current_guess.marker == nearest_times[0].marker:
+					continue
+				else:
+					other_choice.append(current_guess)
+
 			choices = [
 				{
 					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 					"prompt": nearest_times[0].marker,
 					"next": nearest_times[0].time + .1
+				},
+
+				{
+					"prompt": other_choice[0].marker,
+					"next": incorrect_time
 				}
 			]
 
 		else:
 			choices = [
 				{
-					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 					"prompt": nearest_times[0].marker,
 					"next": incorrect_time
 				}
@@ -274,11 +287,11 @@ class ConditionalEditor(_VideoEditor):
 			}
 		)
 		edits["timePoints"].append({
-				"time": self.specials["Punishment"] + self.punishment_length,
+				"time": round(self.specials["Punishment"] + 1, 1),
 				"choices": [
 					{
 						"prompt": "Continue",
-						"next": 0.0
+						"next": 1.1
 					}
 				]
 			}

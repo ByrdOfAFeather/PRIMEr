@@ -174,6 +174,10 @@ function addNewTemplate() {
         alert("You can't add a template with the same name twice!");
     }
 
+    else if (!newTemplateType) {
+        alert("Please input a name!");
+    }
+
     else {
         templateNameInput.value = "";
         let addedTemplateType = document.createElement("a");
@@ -230,7 +234,7 @@ function decodeStreamMap(decodable) {
     let params = decodable.split(",");
     for (let i = 0; i < params.length; i++) {
         let current_link = decodeQueryString(params[i]);
-        let current_type = current_link["type"].split(";")[0];
+        let current_type = current_link["type"].split(";")[0]   ;
         let current_quality = current_link["quality"].split(",")[0];
         current_link["original_url"] = current_link["url"];
         current_link["url"] = "" + current_link["url"] + "&signature" + current_link["sig"];

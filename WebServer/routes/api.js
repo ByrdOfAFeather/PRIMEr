@@ -28,6 +28,8 @@ router.put('/', function(req, res) {
             console.log("FINISHED");
             json = JSON.parse('{"video":true, "link":' + '"' +splicedValues[splicedValues.length - 2] + '"' + '}');
             res.status(200).json(json);
+        }).on('message', function (message) {
+            console.log(message);
         });
     }
 
@@ -63,7 +65,10 @@ router.put('/', function(req, res) {
                 console.log("FINISHED");
                 json = JSON.parse('{"video":true, "link":' + '"' + splicedValues[splicedValues.length - 2] + '"' + '}');
                 res.status(200).json(json);
+            }).on('message', function (message) {
+                console.log(message);
             });
+
         });
     }
 });

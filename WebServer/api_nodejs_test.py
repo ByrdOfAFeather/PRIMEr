@@ -1,10 +1,5 @@
 import sys
 sys.path.append("..")
-from database import DATABASE_PATH
-from templatescanners import ThreadedVideoScan
-from VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
-from VideoProcessing.Timestamp import Timestamp
-from threading import Thread
 import os
 import sqlite3 as sql
 import json
@@ -13,6 +8,12 @@ import urllib.parse
 import shutil
 import datetime
 import cv2
+from database import DATABASE_PATH
+# from templatescanners import ThreadedVideoScan
+from templatescannersbeta import ThreadedVideoScan
+from VideoProcessing.VideoEditors import VanillaEditor, ConditionalEditor
+from VideoProcessing.Timestamp import Timestamp
+from threading import Thread
 
 
 # Generic function to parse lists into a sql readable format
@@ -48,7 +49,6 @@ def edit_video(timestamps, yt_id, video_editor_class, specials=None):
 	data = urllib.parse.urlencode([('gp', output_json)])
 	with urllib.request.urlopen("https://tarheelgameplay.org/play", data=data.encode('utf-8')) as fp:
 		result = fp.read()
-	# result = "NOT CURRENTLY ADDING THIS VIDEO TO TARHEELHAMEPLAY"
 	return result
 
 
@@ -104,7 +104,7 @@ def scan_video(yt_id, video_editor_class, specials=None):
 	print(current_templates)
 
 	scanner = ThreadedVideoScan()
-	final_output = scanner.run(current_templates, video, .6)
+	final_output = scanner.run(current_templates, video)
 	final_output.sort(key=lambda x: x.time)
 
 	# Development Tools
@@ -163,7 +163,7 @@ def export_videos(video_id, video_list):
 			                 round(template_code["realRectX"] + template_code["rectangleWidth"])]
 			indiv_template_path = template_storage_path + f"/{index}.png"
 			cv2.imwrite(indiv_template_path, template)
-			cv2.imwrite(indiv_template_path + f'{loaded_video.get(cv2.CAP_PROP_POS_FRAMES)}.png', frame)
+			cv2.imwrite(indiv_template_path + "flipped.png", cv2.flip(template, 1))
 			add_templates(indiv_template_path, safe_name)
 
 

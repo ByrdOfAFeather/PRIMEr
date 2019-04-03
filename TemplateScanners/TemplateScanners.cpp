@@ -18,6 +18,7 @@ using namespace cv;
 using namespace boost::python;
 
 typedef std::map<std::string, std::deque<std::string>> DescriptorToTemplatesMap;
+typedef std::map<std::string, double> TemplateToThresholdMap;
 
 class Timestamp {
 public:
@@ -34,14 +35,18 @@ public:
 class TemplateScanner {
 public:
     std::map<std::string, std::deque<cv::Mat>> templateMats;
-    double templateThreshold;
+    TemplateToThresholdMap thresholdMap;
 
-    TemplateScanner(const DescriptorToTemplatesMap &templatePaths, double threshold){
-        templateMats = build_image_threshold_hash(templatePaths);
-        templateThreshold = threshold;
+    TemplateScanner(const DescriptorToTemplatesMap &templatePaths) {
+        templateMats = build_image_map(templatePaths);
+    }
+
+    TemplateScanner(const DescriptorToTemplatesMap &templatePaths, TemplateToThresholdMap initThresholdMap) {
+        templateMats = build_image_map(templatePaths);
+        thresholdMap = initThresholdMap; 
     };
 
-    std::map<std::string, std::deque<cv::Mat>> build_image_threshold_hash(const DescriptorToTemplatesMap &templatePaths) {
+    std::map<std::string, std::deque<cv::Mat>> build_image_map(const DescriptorToTemplatesMap &templatePaths) {
         std::map<std::string, std::deque<cv::Mat>> returnMap;
         for (auto const& currentItems: templatePaths) {
             std::string currentDescriptor = currentItems.first;
@@ -64,7 +69,8 @@ public:
         return returnMap;
     }
 
-    double match_template(cv::Mat image, cv::Mat templateToMatch, int filterProcess) {
+    double match_template(cv::Mat image, cv::Mat templateToMatch, std::string descriptor,
+            int templateIndex, int filterProcess) {
         cv::Mat result;
         int resultCols = image.cols - templateToMatch.cols + 1;
         int resultRows = image.rows - templateToMatch.rows + 1;
@@ -75,6 +81,13 @@ public:
         double minVal; double maxVal; cv::Point minLoc; cv::Point maxLoc; cv::Point matchLoc;
 
         cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+        cv::Mat outputImage = image.clone();
+        // if (maxVal >= thresholdMap[descriptor + std::to_string(templateIndex)]) {
+        //     rectangle( outputImage, maxLoc, Point( maxLoc.x + templateToMatch.cols , maxLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0 );
+        //     rectangle( result, maxLoc, Point( maxLoc.x + templateToMatch.cols , maxLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0 );
+        //     cv::imwrite("test" + std::to_string(maxVal) + ".png", outputImage);
+        // }
+
         return maxVal;
     }
 
@@ -86,15 +99,17 @@ public:
 
             // Gets all matches above the threshold
             double currentDescriptorMaxProbability = 0;
+            int TemplateIndex = 0;
             for (cv::Mat &currentImage: currentImages) {
-                double currentMaxProbability = match_template(image, currentImage, cv::TM_CCOEFF_NORMED);
-                if (currentMaxProbability >= templateThreshold) {
+                double currentMaxProbability = match_template(image, currentImage, currentDescriptor, TemplateIndex, cv::TM_CCOEFF_NORMED);
+                if (currentMaxProbability >= thresholdMap[currentDescriptor + std::to_string(TemplateIndex)]) {
                     if (currentDescriptorMaxProbability < currentMaxProbability) {
                         currentDescriptorMaxProbability = currentMaxProbability;
+                        positive[currentDescriptor] = currentDescriptorMaxProbability;
                     }
                 }
+                TemplateIndex += 1;
             }
-            positive[currentDescriptor] = currentDescriptorMaxProbability;
         }
 
         // Finds best match above the threshold
@@ -113,7 +128,9 @@ public:
         }
 
         else if (positive.size() == 1) {
-            for (auto const &finalValue : positive) { return finalValue.first; }
+            for (auto const &finalValue : positive) {
+                return finalValue.first;
+            }
         }
 
         else { return ""; }
@@ -133,7 +150,7 @@ public:
     std::string videoPath;
 
     VideoScannerThreaded(const DescriptorToTemplatesMap &templatePaths, std::string initVideoPath,
-            int frameIndexStart, int frameIndexEnd, double threshold);
+            int frameIndexStart, int frameIndexEnd, TemplateToThresholdMap thresholdMap);
 
     std::deque<Timestamp> get_timestamps() {
         // Load video and make sure it isn't empty
@@ -161,26 +178,23 @@ public:
                 // Scan the frame with the current templates
                 std::string exportDescriptor = scan(currentFrame);
 
-
                 if (!exportDescriptor.empty()) {
-                    cout << "EXPORTING : ";
-                    cout << video.get(cv::CAP_PROP_POS_MSEC) / 1000 << endl;
-                    cout << "EXPORTING : ";
-                    cout << exportDescriptor << endl;
-
                     // Testing code for running from C++
 //                    if (false) {
 //                        cv::imshow("Display window " + std::to_string(windowNumber), currentFrame);
 //                        cv::waitKey(0);
 //                    }
-
+                    cout << "EXPORTING : ";
+                    cout << video.get(cv::CAP_PROP_POS_MSEC) / 1000 << endl;
+                    cout << "EXPORTING : ";
+                    cout << exportDescriptor << endl;
                     Timestamp currentTime(exportDescriptor, video.get(cv::CAP_PROP_POS_MSEC) / 1000);
                     timestamps.push_front(currentTime);
                 }
 
                 // Move a second in the video
-                double currentFrameNumber = video.get(cv::CAP_PROP_POS_FRAMES);
-                video.set(cv::CAP_PROP_POS_FRAMES, currentFrameNumber + (fps / 2));
+               double currentFrameNumber = video.get(cv::CAP_PROP_POS_FRAMES);
+               video.set(cv::CAP_PROP_POS_FRAMES, currentFrameNumber + (fps / 10));
             }
 
             else {
@@ -195,20 +209,141 @@ public:
 
 VideoScannerThreaded::VideoScannerThreaded(const DescriptorToTemplatesMap &templatePaths,
                                            std::string initVideoPath, int frameIndexStart, int frameIndexEnd,
-                                           double threshold) : TemplateScanner(templatePaths, threshold) {
+                                           TemplateToThresholdMap thresholdMap)
+                                           : TemplateScanner(templatePaths, thresholdMap) {
     frameIndexes[0] = frameIndexStart;
     frameIndexes[1] = frameIndexEnd;
     videoPath = std::move(initVideoPath);
 }
 
+
+class ThresholdFinder: public TemplateScanner {
+public:
+    ThresholdFinder(DescriptorToTemplatesMap templatePaths);
+
+    using TemplateScanner::match_template; 
+
+    double static match_template(cv::Mat image, cv::Mat templateToMatch, int filterProcess) {
+        cv::Mat result;
+        int resultCols = image.cols - templateToMatch.cols + 1;
+        int resultRows = image.rows - templateToMatch.rows + 1;
+        result.create(resultRows, resultCols, CV_32FC1);
+
+        cv::matchTemplate(image, templateToMatch, result, filterProcess);
+
+        double minVal; double maxVal; cv::Point minLoc; cv::Point maxLoc; cv::Point matchLoc;
+
+        cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+
+        return maxVal;
+    }
+
+    double static getThreshold(std::string descriptor, cv::Mat templateToMatch, std::string videoPath, long frameGuess, std::string specificDescriptor="Generic") {
+        cv::VideoCapture video(videoPath);
+
+        double bestMatch = 0;
+        double worstMatch = 2; 
+        double frameCount = video.get(cv::CAP_PROP_FRAME_COUNT);
+
+        std::random_device rd;
+        std::default_random_engine generator(rd());
+        std::uniform_int_distribution<long> distribution(0, (long)frameCount);
+
+        std::deque<double> matches; 
+        for (int i = 0; i <= frameGuess; i++) {
+
+            long frame = distribution(generator);
+
+            video.set(cv::CAP_PROP_POS_FRAMES, frame);
+            cv::Mat currentFrame;
+            video.read(currentFrame);
+
+            if (!currentFrame.empty()) {
+                    
+                double currentMatch = match_template(currentFrame, templateToMatch, cv::TM_CCOEFF_NORMED);
+                matches.push_front(currentMatch); 
+                if (bestMatch <= currentMatch) {
+                    bestMatch = currentMatch;
+                }
+
+                if (worstMatch >= currentMatch) {
+                    worstMatch = currentMatch; 
+                }
+                
+            }
+
+            else {
+                continue;
+            }
+        }
+        cout << descriptor + specificDescriptor << endl;
+        cout << std::to_string(bestMatch) << endl;
+        for (double &match : matches) {
+            cout << match << endl; 
+        }
+        video.release(); 
+        double thresh = bestMatch - worstMatch; 
+        return thresh;
+    }
+
+
+    TemplateToThresholdMap getThresholds(std::string videoPath) {
+        cout << "I got here" << endl;
+        cv::VideoCapture video(videoPath);
+
+        double frameRate = video.get(cv::CAP_PROP_FPS);
+        double frameCount = video.get(cv::CAP_PROP_FRAME_COUNT);
+        video.release(); 
+
+        double frameGuess = std::log(1 - .9) / std::log(1 - ((1 + frameRate) / frameCount));
+        double frameGuessInt = std::floor(frameGuess);
+
+        cout << std::to_string(frameGuessInt) << endl;
+
+        if (frameGuessInt > frameCount) { frameGuessInt = frameCount; }
+
+        std::map<std::string, std::future<double>> tempTemplateToThresholdMap;
+
+
+        for (auto const &currentItems: templateMats) {
+            std::string currentDescriptor = currentItems.first;
+            std::deque<cv::Mat> currentImages = currentItems.second;
+            int imageIndex = 0;
+            for (cv::Mat &currentImage: currentImages) {
+                std::promise<double> currentPromise;
+                std::future<double> currentPromisedFuture = std::async(getThreshold, currentDescriptor, currentImage,
+                                                                       videoPath, frameGuess,
+                                                                       std::to_string(imageIndex));
+                tempTemplateToThresholdMap[currentDescriptor + std::to_string(imageIndex)] = std::move(
+                        currentPromisedFuture);
+                imageIndex += 1;
+                cout << "=== JUST STARTED " + currentDescriptor + " THREAD " + std::to_string(imageIndex) + " ===" << endl; 
+            }
+            cout << "=== STARTED " + std::to_string(imageIndex) + " THREADS ===" << endl;
+        }
+
+
+        TemplateToThresholdMap thresholdMap;
+
+        for (auto  &currentItems: tempTemplateToThresholdMap) {
+            std::string currentDescriptorIndex = currentItems.first;
+            double currentMax = currentItems.second.get();
+            cout << "Adding " + currentDescriptorIndex + " with " + std::to_string(currentMax) << endl;
+            thresholdMap[currentDescriptorIndex] = currentMax;
+        }
+        return thresholdMap;
+    }
+};
+
+ThresholdFinder::ThresholdFinder(DescriptorToTemplatesMap templatePaths): TemplateScanner(templatePaths) { }
+
+
 class VideoThreader {
 public:
     DescriptorToTemplatesMap templates;
-    double threshold;
 
-    VideoThreader(DescriptorToTemplatesMap initTemplatePaths, double initThreshold) {
+    VideoThreader(DescriptorToTemplatesMap initTemplatePaths) {
         templates = initTemplatePaths;
-        threshold = initThreshold;
     }
 
     std::deque<Timestamp> thread_scanners(const std::string &videoPath, int divisor = 1800) {
@@ -218,15 +353,17 @@ public:
         assert(frame_count != 0);
         video.release();
 
+        ThresholdFinder finder(templates);
+        TemplateToThresholdMap thresholdMap = finder.getThresholds(videoPath);
+
         // Build the list of threads
         std::deque<std::future<std::deque<Timestamp>>> futures;
         int frameSections = 0;
         int currentFrameStart = 0;
         int currentFrameEnd = divisor;
         while (frame_count > divisor * frameSections) {
-            VideoScannerThreaded currentVideoScanner(templates, videoPath, currentFrameStart, currentFrameEnd,
-                                                     threshold);
-            std::promise<std::deque<Timestamp>> currentReturnPromise;
+            VideoScannerThreaded currentVideoScanner(templates, videoPath, 
+                currentFrameStart, currentFrameEnd, thresholdMap);
             std::future<std::deque<Timestamp>> currentPromisedFuture = std::async(&VideoScannerThreaded::get_timestamps,
                     currentVideoScanner);
             futures.push_front(std::move(currentPromisedFuture));
@@ -249,11 +386,12 @@ public:
     }
 };
 
+
 struct ThreadedVideoScan {
 public:
     ThreadedVideoScan() = default;
 
-    boost::python::list run(boost::python::dict templates, boost::python::str pythonVideoPath, double threshold) {
+    boost::python::list run(boost::python::dict templates, boost::python::str pythonVideoPath) {
         DescriptorToTemplatesMap final;
 
         // Convert passed Python types to C++ map
@@ -270,7 +408,7 @@ public:
         }
 
         // Call the scanner to create the threads and run them
-        VideoThreader scanner(final, threshold);
+        VideoThreader scanner(final);
 
         // Convert scanner return values from C++ Types to Python types
         std::deque<Timestamp> cTimestamps = scanner.thread_scanners(videoPath);
@@ -281,8 +419,8 @@ public:
         return pythonTimestamps;
     }
 
-    void runTest(DescriptorToTemplatesMap templates, std::string videoPath, double threshold) {
-        VideoThreader scanner(templates, threshold);
+    void runTest(DescriptorToTemplatesMap templates, std::string videoPath) {
+        VideoThreader scanner(templates);
         std::deque<Timestamp> times;
         times = scanner.thread_scanners(videoPath);
         for (Timestamp &time : times) {
@@ -305,12 +443,12 @@ int main() {
 
     // Start test
     ThreadedVideoScan testScanner;
-    testScanner.runTest(testMap, videoPath, .7);
+    testScanner.runTest(testMap, videoPath);
 }
 
 
 
-BOOST_PYTHON_MODULE(templatescanners) {
+BOOST_PYTHON_MODULE(templatescannersbeta) {
     class_<ThreadedVideoScan>("ThreadedVideoScan")
             .def("run", &ThreadedVideoScan::run);
 
