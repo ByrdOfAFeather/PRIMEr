@@ -1,7 +1,3 @@
-/*
-* TODO: Stream video from youtube and convert api request to passing coordinates
- */
-
 let createError = require('http-errors');
 let express = require('express');
 let path = require('path');

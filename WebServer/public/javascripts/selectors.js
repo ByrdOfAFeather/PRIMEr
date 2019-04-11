@@ -2,13 +2,10 @@
 // @Speencer Lockhart
 // https://stackoverflow.com/questions/17408010/drawing-a-rectangle-using-click-mouse-move-and-click
 
-// initDraw(document.getElementById("video-container"));
-
 let previous_rectangle = null;
-let canDraw = false;
 
 function initDraw(canvas) {
-    var mouse = {
+    let mouse = {
         x: 0,
         y: 0,
         startX: 0,
@@ -16,12 +13,12 @@ function initDraw(canvas) {
     };
 
     function setMousePosition(e) {
-        var ev = e;
+        let ev = e;
         mouse.x = ev.pageX;
         mouse.y = ev.pageY;
     }
 
-    var element = null;
+    let element = null;
 
     canvas.onmousemove = function (e) {
         setMousePosition(e);
@@ -31,8 +28,6 @@ function initDraw(canvas) {
             element.style.height = Math.abs(mouse.y - mouse.startY) + 'px';
             element.style.left = (mouse.x - mouse.startX < 0) ? mouse.x + 'px' : mouse.startX + 'px';
             element.style.top = (mouse.y - mouse.startY < 0) ? mouse.y + 'px' : mouse.startY + 'px';
-            // element.style.left = document.getElementById("current-video").left + element.style.left;
-            // element.style.top = document.getElementById("current-video").top + element.style.top;
         }
     };
 
@@ -67,4 +62,11 @@ function initDraw(canvas) {
     };
 }
 
-function getPreviousRectangle() { return previous_rectangle.parentNode; }
+function getPreviousRectangle() {
+    if (previous_rectangle == null) {
+        return null;
+    }
+    else {
+        return previous_rectangle.parentNode;
+    }
+}

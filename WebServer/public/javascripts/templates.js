@@ -13,9 +13,18 @@ let video = document.getElementById("current-video");
 video.onpause = function() {
     grabScreen();
 };
+window.addEventListener("error", function(e) {
+    console.log(e);
+    if (e.target === document.getElementById("current-video-source")) {
+        alert("This video cannot be played.");
+    }
+}, true);
 
 function exportTemplate() {
     let container = getPreviousRectangle();
+    if (container === null) {
+        alert("You have to select the area to be saved! Try Pausing the video!");
+    }
 
     let rectangle = container.getElementsByClassName('rectangle')[0];
     let rectangleX = parseInt(rectangle.style.left, 10);
@@ -38,7 +47,7 @@ function exportTemplate() {
     ctx.fillRect(0, 0, rectangleWidth, rectangleHeight);
     ctx.drawImage(v, rectangleX - position["left"], rectangleY - position["top"], rectangleWidth , rectangleHeight, 0, 0, rectangleWidth, rectangleHeight);
 
-    if (!currentTemplateType) { alert("Please selection an action type before saving an action!"); }
+    if (!currentTemplateType) { alert("Please select a label before saving a label example!"); }
 
     if (document.getElementById(currentTemplateType.toLowerCase()).classList[0] === "conditional-action-type") {
         conditionals[currentTemplateType] = [];
@@ -75,11 +84,14 @@ function exportTemplate() {
             templateImage.className = "delete-button";
             templateImage.src = "http://i.imgur.com/TWLiACv.png";
             templateImage.alt = "delete";
-            templateImage.onclick = function (event) {
+            let clicker = document.createElement("a");
+            clicker.href = ""; 
+            clicker.onclick = function (event) {
                 event.preventDefault();
                 deleteTemplate(event, true);
             };
-            newTemplate.appendChild(templateImage);
+            clicker.appendChild(templateImage);
+            newTemplate.appendChild(clicker);
             templateTableRow.appendChild(newTemplate);
         }
     }
@@ -143,7 +155,7 @@ function setCurrentTemplateType(clickEvent) {
 function deleteTemplate(event, deleteList=false) {
 
     if (deleteList) {
-        let name = event.target.parentNode.id;
+        let name = event.target.parentNode.parentNode.id;
         name = name.split("-");
         let template = name[0];
         let index = name[1] + 1;
@@ -204,6 +216,7 @@ function addNewTemplate() {
         let newRow = document.createElement("tr");
         let baseData = document.createElement("td");
         let baseDataText = document.createTextNode(newTemplateType);
+        baseData.style.color = "white";
         baseData.appendChild(baseDataText);
         newRow.appendChild(baseData);
         newRow.id = newTemplateType + "-table";
@@ -217,14 +230,8 @@ function showTemplates() {
     templatesShowing = !templatesShowing;
 }
 
-function showDropDown(passedButton) {
-    if (passedButton === document.getElementById("template-drop-down-button")) {
-        document.getElementById("template-drop-down-contents").classList.toggle("show");
-    }
-
-    else if (passedButton === document.getElementById("show-templates")) {
-        document.getElementById("templates-drop-down-contents").classList.toggle("show");
-    }
+function showActions(passedButton) {
+    document.getElementById("template-drop-down-contents").classList.toggle("show");
 }
 
 // Heavily inspired by the code from : http://youtubescreenshot.com
@@ -282,7 +289,6 @@ function loadVideo() {
             else if (links["video/webm medium"] !== undefined) {
                 correctLink = links["video/webm medium"];
             }
-
             let video = document.getElementById("current-video");
             document.getElementById("current-video-source").src = correctLink;
             video.load();
@@ -295,15 +301,22 @@ function loadVideo() {
 }
 
 window.onclick = function(event) {
+    let templateDrop = document.getElementById("template-drop-down-contents");
     if (!event.target.matches('.drop-down')) {
-        let dropdowns = document.getElementsByClassName("drop-down-contents");
-        let i;
-        for (i = 0; i < dropdowns.length; i++) {
-            let openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
-            }
+        if (templateDrop.classList.contains("show")) {
+            templateDrop.classList.remove("show");
         }
+        if (templatesShowing) {
+            showTemplates();
+        }
+    }
+
+    else if (event.target.matches("#template-drop-down-button") && templatesShowing) {
+        showTemplates();
+    }
+
+    else if (event.target.matches('#show-templates') && templateDrop.classList.contains("show")) {
+        templateDrop.classList.remove("show");
     }
 };
 
@@ -315,13 +328,18 @@ window.onkeypress = function(event) {
 
 function finish() {
     let data = {};
+    let actionKeys = Object.keys(actionTemplateDict);
+    if (actionKeys.length === 0) {
+        alert("No actions were added! You need to add templates!");
+        return;
+    }
+
     data["templates"] = actionTemplateDict;
     data["conditionals"] = conditionals;
     data["videoID"] = currentVideo;
     let json = JSON.stringify(data);
     alert("Your video is now being processed! This could take a while.");
     $.ajax({
-        // url: 'http://127.0.0.1:5001/api/startedit/',
         url: 'http://127.0.0.1:3000/api/',
         method: 'PUT',
         dataType: 'json',
@@ -329,7 +347,7 @@ function finish() {
             data: json
         },
         success : function (results) {
-            alert(results["link"]);
+            alert(results["status"]);
         },
         error : function(results) {
             if (results.status === 0) {

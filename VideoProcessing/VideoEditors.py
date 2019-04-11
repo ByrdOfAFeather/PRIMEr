@@ -205,11 +205,12 @@ class ConditionalEditor(_VideoEditor):
 		if len(nearest_times) == 1:
 			other_choice = []
 			while 1:
-				current_guess = self.timestamps[rand.randint(0, len(self.timestamps - 1))]
+				current_guess = self.timestamps[rand.randint(0, len(self.timestamps) - 1)]
 				if current_guess.marker == nearest_times[0].marker:
 					continue
 				else:
 					other_choice.append(current_guess)
+					break
 
 			choices = [
 				{
