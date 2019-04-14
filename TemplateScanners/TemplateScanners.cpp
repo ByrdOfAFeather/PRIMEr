@@ -282,7 +282,7 @@ public:
             cout << match << endl; 
         }
         video.release(); 
-        double thresh = bestMatch - worstMatch; 
+        double thresh = bestMatch; 
         return thresh;
     }
 

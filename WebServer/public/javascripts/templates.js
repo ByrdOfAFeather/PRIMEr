@@ -143,7 +143,7 @@ function setCurrentTemplateType(clickEvent) {
     else if (clickEvent.target.tagName === "IMG") {
         currentTemplateType = "";
         selector.innerText = "Select Action Type";
-        return;
+
     }
 
     else {
