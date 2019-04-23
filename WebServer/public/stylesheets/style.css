@@ -1,0 +1,157 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+#video-container {
+    display: table;
+    margin: 0 auto;
+}
+
+#input-video-label {
+    display: table;
+    margin: 0 auto;
+}
+
+#output-screengrab {
+    display: table;
+    margin: 0 auto;
+}
+
+#button-options {
+    text-align: center;
+}
+
+#output-screengrab {
+    display: table; align-content: center;
+    width:0px;
+    height:0px;
+    background-color: white;
+}
+
+#template-area {
+    display: table; align-content: center;
+    width:0px;
+    height:0px;
+    background-color: white;
+}
+
+.rectangle {
+    border: 1px solid #FF0000;
+    position: absolute;
+}
+
+#new-template-button {
+    background-color: #6094ba;
+}
+
+#new-template-button:hover {
+    background-color: #6ba0c7;
+}
+
+#input-video-button {
+    background-color: #6094ba;
+}
+
+#input-video-button:hover {
+    background-color: #6ba0c7;
+}
+
+.tar-heel-button {
+    font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    background-color: #7BAFD4;
+    color: white;
+    padding: 16px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.tar-heel-button:hover {
+    background-color: #6094ba;
+}
+
+.tar-heel-button:focus {
+    outline: none;
+}
+
+.drop-down-contents {
+    display: none;
+    position: absolute;
+    overflow: auto;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    background-color: #7BAFD4;
+}
+
+.drop-down-contents a {
+    color: white;
+    padding: 12px 16px;
+    display: block;
+    text-decoration: none;
+}
+
+.drop-down-contents p:hover {
+    background-color: #6094ba;
+}
+
+.show {
+    display: block;
+}
+
+.tar-heel-label {
+    background-color: #7BAFD4;
+    color: white;
+    font-style: normal;
+    font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    display: inline-block;
+    padding-left: 16px;
+}
+
+.delete-button {
+    height: 16px;
+    width: 16px;
+    display: inline-block;
+    padding-left: 5px;
+}
+
+#current-video {
+    display: inline-block;
+}
+
+#template-buttons {
+    display: inline-block;
+}
+
+#show-templates {
+    top: 0;
+}
+
+#drop-down {
+    display: inline-block;
+}
+
+#show-templates-contents {
+    display: inline-block;
+}
+
+#template-table th, td {
+    font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+#main-header {
+    display: table;
+    margin: 0 auto;
+    font-size: 2em;
+    padding-top: .25em;
+    font-family: 'Terminal Dosis', sans-serif;
+    font-weight: 200;
+    color: #555;
+}
+
+
+

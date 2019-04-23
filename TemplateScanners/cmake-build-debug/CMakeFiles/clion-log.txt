@@ -1,0 +1,8 @@
+/snap/clion/61/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/byrdofafeather/ByrdOfAFeather/PRIMEr/TemplateScanners
+-- Boost version: 1.67.0
+-- Found the following Boost libraries:
+--   system
+--   filesystem
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/byrdofafeather/ByrdOfAFeather/PRIMEr/TemplateScanners/cmake-build-debug

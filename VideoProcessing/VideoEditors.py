@@ -1,4 +1,5 @@
 import datetime
+import random as rand
 
 
 class _VideoEditor:
@@ -121,7 +122,7 @@ class VanillaEditor(_VideoEditor):
 		choices = [
 			{
 				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
-				"prompt": current_class,
+				"prompt": current_class + "TESTREMOVE",
 				"next": round(self.timestamps[index_of_timestamps].time, 1)
 			}
 		]
@@ -199,21 +200,34 @@ class ConditionalEditor(_VideoEditor):
 		# this is used to make multiple "Continue" choices near the punishment timestamp so that they can point to
 		# different points in the video. (This is needed so the video can go right back to where a mistake was made)
 		self.punishment_offset += .2
-		incorrect_time = round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length) - .1, 1)
+		incorrect_time = round(self.specials["Punishment"], 1)
 
 		if len(nearest_times) == 1:
+			other_choice = []
+			while 1:
+				current_guess = self.timestamps[rand.randint(0, len(self.timestamps) - 1)]
+				if current_guess.marker == nearest_times[0].marker:
+					continue
+				else:
+					other_choice.append(current_guess)
+					break
+
 			choices = [
 				{
 					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 					"prompt": nearest_times[0].marker,
 					"next": nearest_times[0].time + .1
+				},
+
+				{
+					"prompt": other_choice[0].marker,
+					"next": incorrect_time
 				}
 			]
 
 		else:
 			choices = [
 				{
-					# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
 					"prompt": nearest_times[0].marker,
 					"next": incorrect_time
 				}
@@ -245,15 +259,15 @@ class ConditionalEditor(_VideoEditor):
 				"time": round(self.timestamps[index_of_timestamps].time, 2),
 				"choices": choices
 			},
-			{
-				"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 2),
-				"choices": [
-					{
-						"prompt": "Continue",
-						"next": round(self.timestamps[index_of_timestamps].time - .1, 2)
-					}
-				]
-			}
+			# {
+			# 	"time": round((self.specials["Punishment"] - self.punishment_offset + self.punishment_length), 2),
+			# 	"choices": [
+			# 		{
+			# 			"prompt": "Continue",
+			# 			"next": round(self.timestamps[index_of_timestamps].time.total_seconds() - .1, 2)
+			# 		}
+			# 	]
+			# }
 		]
 
 	def edit(self):
@@ -261,7 +275,7 @@ class ConditionalEditor(_VideoEditor):
 
 		# This time point is so that the player can skip over the punishment "Continues" while playing through the video
 		edits["timePoints"].append({
-				"time": round(self.specials["Punishment"] - self.punishment_offset + self.punishment_length - .2, 1),
+				"time": round(self.specials["Punishment"] - .2, 1),
 				"choices": [
 					{
 						"prompt": "Continue",
@@ -269,6 +283,16 @@ class ConditionalEditor(_VideoEditor):
 							self.specials["Punishment"] + 2,
 							1
 						)
+					}
+				]
+			}
+		)
+		edits["timePoints"].append({
+				"time": round(self.specials["Punishment"] + 1, 1),
+				"choices": [
+					{
+						"prompt": "Continue",
+						"next": 1.1
 					}
 				]
 			}

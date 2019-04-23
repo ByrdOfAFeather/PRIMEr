@@ -1,0 +1,56 @@
+- var videoInput = true;
+doctype html
+head
+  link(rel='stylesheet' href='stylesheets/style.css')
+  meta(charset='UTF-8')
+  title Image Selector
+h1#main-header
+  | Automatic Editor
+
+label#input-video-label.tar-heel-label(for='input-video')
+  | Youtube Video Link:
+  input#input-video(type='text')
+  button#input-video-button.tar-heel-button(onclick='loadVideo();') Load
+#video-container
+  case videoInput
+    when true
+      video#current-video(
+      preload="auto"
+      controls
+      )
+        source#current-video-source(src='')
+      canvas#output-screengrab
+    default
+      canvas#output-screengrab
+#screengrab-container(style='')
+// - Adds templates to the database -
+#button-options
+  label.tar-heel-label(for='new-template-type')
+    | Add New Label:
+    input#new-template-type(type='text' placeholder='Label Name')
+    button#new-template-button.tar-heel-button(onclick='addNewTemplate();') Add
+  #drop-down
+    button#template-drop-down-button.tar-heel-button.drop-down(onclick='showActions();')
+      | Select Label Here
+    #template-drop-down-contents.drop-down-contents
+      a#punishment.conditional-action-type(href='#' onclick='setCurrentTemplateType(event)')
+        | Punishment
+        img.delete-button(src='images/deletebutton.png' alt='delete' onclick='event.preventDefault(); deleteTemplate(event);')
+  #template-buttons
+    button#export_button.tar-heel-button(onclick='exportTemplate();') Save Label Example
+    #show-templates-contents
+      button#show-templates.tar-heel-button.drop-down(onclick='showTemplates();') Show Label Examples
+      #added-templates.drop-down-contents
+        table#template-table
+          tr#template-table-headers
+            th Template Name
+  button#finish-button.tar-heel-button(onclick='finish();') Finish
+#template-write
+    canvas#template-area
+// - Scripts for rectangles -
+script(src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js')
+script(src='javascripts/selectors.js')
+script(src='javascripts/templates.js')
+script(src="https://vjs.zencdn.net/7.3.0/video.min.js")
+link(href="https://vjs.zencdn.net/7.3.0/video-js.min.css" rel="stylesheet")
+script(src='https://html2canvas.hertzen.com/dist/html2canvas.min.js')
