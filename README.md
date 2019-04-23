@@ -16,6 +16,9 @@ the current interface requires manual insertions of gameplay points across the e
 
 <h1 align="center"> Building TemplateScanners </h1>
 
+This project relies on another library, TemplateScanners, written in C++ with bindings for Python. This is done to take full advantage
+of multithreading. This library can be found [here](https://github.com/ByrdOfAFeather/TemplateScanners).
+
 The process of building the template scanner module from the provided C++ code is fairly straightforward. It is highly 
 recommended that this is built using linux as the build process with windows is significantly more complex, however, it 
 has been confirmed to work on windows.
@@ -33,7 +36,7 @@ but need to be acquired separately on linux.)
 <br>
 Ensure that Cmake is installed with version >= 3.12. From there build the .so file by invoking cmake in the TemplateScanners
 directory. Note that on windows the extension should be .pyd. Move the output file, either .pyd or .so into your python's 
-DLLs or site-packages folder. On Windows you may need to include the following .dlls if you are unable to add them to the path properly: <br>
+DLLs or site-packages folder. On Windows you may need to include the following .dlls if they are unable to be detected in the path: <br>
 (the ..... are used to indicate build information that is specific to the user) <br>
 boost_python......dll <br>
 opencv_core401.dll <br>
@@ -43,7 +46,7 @@ opencv_videoio401.dll <br>
 
 Unfortunately no pre-compiled libraries exist yet so this process must be followed in order to run the program. If unable to complete this, 
 it's possible to download an outdated version of the TemplateScanners library written in Python from this [commit](https://github.com/ByrdOfAFeather/PRIMEr/blob/c41b9e8359e2cd9563f137b0cb3c7415c7b3f385/VideoProcessing/TemplateScanners.py). However, this is 
-not going to be continued to be updated and will most likely fail to work with the current api without significant modification.
+not going to be updated and will most likely fail to work with the current api without significant modification.
 
 <h1 align="center"> Results </h1>
 
