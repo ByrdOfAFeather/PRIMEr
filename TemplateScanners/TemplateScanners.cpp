@@ -36,24 +36,34 @@ class TemplateScanner {
 public:
     std::map<std::string, std::deque<cv::Mat>> templateMats;
     TemplateToThresholdMap thresholdMap;
+    TemplateToThresholdMap orgThresholdMap; 
 
     TemplateScanner(const DescriptorToTemplatesMap &templatePaths) {
-        templateMats = build_image_map(templatePaths);
+        templateMats = build_image_map(templatePaths, true);
     }
 
     TemplateScanner(const DescriptorToTemplatesMap &templatePaths, TemplateToThresholdMap initThresholdMap) {
-        templateMats = build_image_map(templatePaths);
+        templateMats = build_image_map(templatePaths, true);
         thresholdMap = initThresholdMap; 
+        orgThresholdMap = initThresholdMap; 
     };
 
-    std::map<std::string, std::deque<cv::Mat>> build_image_map(const DescriptorToTemplatesMap &templatePaths) {
+    std::map<std::string, std::deque<cv::Mat>> build_image_map(const DescriptorToTemplatesMap &templatePaths, bool readGrey = false) {
         std::map<std::string, std::deque<cv::Mat>> returnMap;
         for (auto const& currentItems: templatePaths) {
             std::string currentDescriptor = currentItems.first;
             std::deque<std::string> paths = currentItems.second;
             for (const std::string &currentPath: paths) {
                 // Reads the image and make sure it exists
-                cv::Mat loadedImage = imread(currentPath, cv::IMREAD_COLOR);
+                cv::Mat loadedImage; 
+                if (readGrey) {
+                    loadedImage = imread(currentPath, cv::IMREAD_GRAYSCALE);
+                }
+
+                else {
+                    loadedImage = imread(currentPath, cv::IMREAD_COLOR);
+                }
+
                 if (loadedImage.empty()) { cout << "FAILED TO LOAD IMAGE "; cout << currentPath << endl;}
 
                 // Gets the reversed image
@@ -82,11 +92,11 @@ public:
 
         cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
         cv::Mat outputImage = image.clone();
-        // if (maxVal >= thresholdMap[descriptor + std::to_string(templateIndex)]) {
-        //     rectangle( outputImage, maxLoc, Point( maxLoc.x + templateToMatch.cols , maxLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0 );
-        //     rectangle( result, maxLoc, Point( maxLoc.x + templateToMatch.cols , maxLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0 );
-        //     cv::imwrite("test" + std::to_string(maxVal) + ".png", outputImage);
-        // }
+        if (maxVal >= thresholdMap[descriptor + std::to_string(templateIndex)]) {
+            rectangle(outputImage, maxLoc, Point( maxLoc.x + templateToMatch.cols , maxLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0);
+            rectangle(result, maxLoc, Point( maxLoc.x + templateToMatch.cols , maxLoc.y + templateToMatch.rows ), Scalar::all(0), 2, 8, 0);
+            cv::imwrite("results/" + descriptor + std::to_string(maxVal) + ".png", outputImage);
+        }
 
         return maxVal;
     }
@@ -100,14 +110,26 @@ public:
             // Gets all matches above the threshold
             double currentDescriptorMaxProbability = 0;
             int TemplateIndex = 0;
+            std::string index = currentDescriptor + std::to_string(TemplateIndex);
             for (cv::Mat &currentImage: currentImages) {
                 double currentMaxProbability = match_template(image, currentImage, currentDescriptor, TemplateIndex, cv::TM_CCOEFF_NORMED);
-                if (currentMaxProbability >= thresholdMap[currentDescriptor + std::to_string(TemplateIndex)]) {
+                if (currentMaxProbability >= thresholdMap[index]) {
                     if (currentDescriptorMaxProbability < currentMaxProbability) {
                         currentDescriptorMaxProbability = currentMaxProbability;
                         positive[currentDescriptor] = currentDescriptorMaxProbability;
                     }
                 }
+                else {
+                    double currentDifference = thresholdMap[index] - currentMaxProbability; 
+                    if (currentDifference <= .03) {
+                        if (thresholdMap[index] - currentDifference >= orgThresholdMap[index]/1.3 && thresholdMap[index] - currentDifference >= .6) {
+                            thresholdMap[index] -= (currentDifference);
+                            cout << "This is the new probablity for " + currentDescriptor + std::to_string(TemplateIndex) << endl; 
+                            cout << thresholdMap[index] << endl; 
+                        }
+                    }
+                }
+
                 TemplateIndex += 1;
             }
         }
@@ -176,7 +198,9 @@ public:
 
             if (video.get(cv::CAP_PROP_POS_FRAMES) < frameIndexes[1] && !currentFrame.empty()) {
                 // Scan the frame with the current templates
-                std::string exportDescriptor = scan(currentFrame);
+                cv::Mat grayFrame; 
+                cv::cvtColor(currentFrame, grayFrame, cv::COLOR_BGR2GRAY);
+                std::string exportDescriptor = scan(grayFrame);
 
                 if (!exportDescriptor.empty()) {
                     // Testing code for running from C++
@@ -192,9 +216,9 @@ public:
                     timestamps.push_front(currentTime);
                 }
 
-                // Move a second in the video
-               double currentFrameNumber = video.get(cv::CAP_PROP_POS_FRAMES);
-               video.set(cv::CAP_PROP_POS_FRAMES, currentFrameNumber + (fps / 10));
+               //  // Move a second in the video
+               // double currentFrameNumber = video.get(cv::CAP_PROP_POS_FRAMES);
+               // video.set(cv::CAP_PROP_POS_FRAMES, currentFrameNumber + (fps / 10));
             }
 
             else {
@@ -242,7 +266,6 @@ public:
         cv::VideoCapture video(videoPath);
 
         double bestMatch = 0;
-        double worstMatch = 2; 
         double frameCount = video.get(cv::CAP_PROP_FRAME_COUNT);
 
         std::random_device rd;
@@ -259,17 +282,13 @@ public:
             video.read(currentFrame);
 
             if (!currentFrame.empty()) {
-                    
-                double currentMatch = match_template(currentFrame, templateToMatch, cv::TM_CCOEFF_NORMED);
+                cv::Mat grayFrame; 
+                cv::cvtColor(currentFrame, grayFrame, cv::COLOR_BGR2GRAY); 
+                double currentMatch = match_template(grayFrame, templateToMatch, cv::TM_CCOEFF_NORMED);
                 matches.push_front(currentMatch); 
                 if (bestMatch <= currentMatch) {
                     bestMatch = currentMatch;
                 }
-
-                if (worstMatch >= currentMatch) {
-                    worstMatch = currentMatch; 
-                }
-                
             }
 
             else {
@@ -288,7 +307,6 @@ public:
 
 
     TemplateToThresholdMap getThresholds(std::string videoPath) {
-        cout << "I got here" << endl;
         cv::VideoCapture video(videoPath);
 
         double frameRate = video.get(cv::CAP_PROP_FPS);

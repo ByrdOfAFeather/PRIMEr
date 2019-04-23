@@ -122,7 +122,7 @@ class VanillaEditor(_VideoEditor):
 		choices = [
 			{
 				# TODO: Investigate the possibility of using NLP to add "keep" to special cases, ex: "Keep Running"
-				"prompt": current_class,
+				"prompt": current_class + "TESTREMOVE",
 				"next": round(self.timestamps[index_of_timestamps].time, 1)
 			}
 		]

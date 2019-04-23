@@ -95,6 +95,7 @@ def export_templates(init_template_dict):
 			                      round(template_code["realRectX"]):
 			                      round(template_code["realRectX"] + template_code["rectangleWidth"])]
 			cv2.imwrite(template["PATH"], exportable_template)
+			cv2.imwrite(template["PATH"] + "flipped.png", cv2.flip(exportable_template, 1))
 
 	temp_path = example.split("/")
 	yt_id = temp_path[1]
