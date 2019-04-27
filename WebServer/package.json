@@ -17,6 +17,6 @@
     "python-shell": "^1.0.7",
     "sqlite3": "^4.0.6",
     "video.js": "^7.4.1",
-    "youtube-dl": "^1.12.2"
+    "youtube-dl": "^1.13.1"
   }
 }

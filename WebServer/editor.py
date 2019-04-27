@@ -63,7 +63,7 @@ def edit_video(timestamps, yt_id, video_editor_class, specials=None):
 
 def scan_video(init_passable_dict, init_path, video_editor, specials=None):
 	scanner = ThreadedVideoScan()
-	final_output = scanner.run(init_passable_dict, init_path)
+	final_output = scanner.run_adaptive_threshold(init_passable_dict, init_path)
 	final_output.sort(key=lambda x: x.time)
 
 	yt_id = init_path.split("/")[1].replace(".mp4", "")
