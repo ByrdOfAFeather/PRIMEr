@@ -1,6 +1,9 @@
 {
-  "name": "primernodejsmigration",
-  "version": "0.0.0",
+  "name": "PRIMEr",
+  "version": "0.0.1",
+  "engines": {
+    "node": "10.15.2"
+  },
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
